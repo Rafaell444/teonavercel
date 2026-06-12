@@ -9,7 +9,7 @@ async function proxyToBackend(req: NextRequest) {
 
   const headers = new Headers()
   req.headers.forEach((value, key) => {
-    if (key !== 'host' && key !== 'connection') {
+    if (key !== 'host' && key !== 'connection' && key !== 'accept-encoding') {
       headers.set(key, value)
     }
   })
