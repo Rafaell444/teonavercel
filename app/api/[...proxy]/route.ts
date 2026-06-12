@@ -30,12 +30,21 @@ async function proxyToBackend(req: NextRequest) {
 
   const responseHeaders = new Headers()
   upstream.headers.forEach((value, key) => {
-    if (key !== 'transfer-encoding' && key !== 'connection') {
+    if (
+      key !== 'transfer-encoding' &&
+      key !== 'connection' &&
+      key !== 'content-encoding' &&
+      key !== 'content-length'
+    ) {
       responseHeaders.set(key, value)
     }
   })
 
-  return new NextResponse(upstream.body, {
+  // Node's fetch auto-decompresses the body, so we read it as text and
+  // return it uncompressed to avoid ERR_CONTENT_DECODING_FAILED in the browser
+  const body = await upstream.text()
+
+  return new NextResponse(body, {
     status: upstream.status,
     headers: responseHeaders,
   })
