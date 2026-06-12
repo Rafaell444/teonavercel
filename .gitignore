@@ -1,0 +1,38 @@
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+.vercel/
+
+# Environment variables
+.env*.local
+.env
+
+# Node
+node_modules/
+.next/
+.DS_Store
+tsconfig.tsbuildinfo
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+ascend_backend/.venv/
+ascend_backend/venv/
+ascend_backend/db.sqlite3
+ascend_backend/media/
+ascend_backend/staticfiles/
+ascend_backend/.env
+*.egg-info/
+dist/
+build/
+
+# Misc
+*.log
+.idea/
+.vscode/
