@@ -85,7 +85,7 @@ export default function RoundTable() {
 
   if (sessions.length === 0) {
     return (
-      <section className="bg-background py-16 sm:py-24" id="group-sessions">
+      <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="group-sessions">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <Eyebrow>Group Sessions</Eyebrow>
           <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">No group sessions available</h2>
@@ -96,7 +96,7 @@ export default function RoundTable() {
   }
 
   return (
-    <section className="bg-background py-16 sm:py-24" id="group-sessions">
+    <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="group-sessions">
       <div className="mx-auto max-w-4xl px-6">
         <div className="text-center mb-10">
           <Eyebrow>Group Sessions</Eyebrow>

@@ -65,7 +65,7 @@ export function UIInput({ className, ...props }: InputHTMLAttributes<HTMLInputEl
   return (
     <input
       className={cn(
-        'h-12 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+        'h-12 w-full rounded-xl border border-border bg-background px-4 text-base text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:text-sm',
         className,
       )}
       {...props}

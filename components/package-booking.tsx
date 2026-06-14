@@ -141,7 +141,7 @@ export default function PackageBooking() {
 
   if (packages.length === 0) {
     return (
-      <section className="bg-background py-16 sm:py-24" id="packages">
+      <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="packages">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <Eyebrow>Packages</Eyebrow>
           <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">No packages available</h2>
@@ -152,7 +152,7 @@ export default function PackageBooking() {
   }
 
   return (
-    <section className="bg-background py-16 sm:py-24" id="packages">
+    <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="packages">
       <div className="mx-auto max-w-4xl px-6">
         <div className="text-center mb-10">
           <Eyebrow>Big Packages</Eyebrow>

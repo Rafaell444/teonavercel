@@ -46,7 +46,7 @@ export function ContactPage() {
 
   return (
     <div className="bg-background">
-      <div className="mx-auto max-w-6xl px-6" style={{ paddingTop: '5%', paddingBottom: '10%' }}>
+      <div className="mx-auto max-w-6xl px-6 pb-16 pt-24 sm:pb-24 sm:pt-32">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}

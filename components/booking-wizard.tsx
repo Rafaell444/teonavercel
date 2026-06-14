@@ -207,7 +207,7 @@ export default function BookingWizard() {
   }
 
   return (
-    <section className="bg-background py-16 sm:py-24" id="book">
+    <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="book">
       <div className="mx-auto max-w-3xl px-6">
         <div className="mb-10 text-center">
           <Eyebrow>Book a session</Eyebrow>
