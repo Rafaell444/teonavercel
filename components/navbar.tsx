@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Menu,
   X,
+  LogIn,
 } from 'lucide-react'
 import { UIButton } from '@/components/ui-kit'
 import { useMe } from '@/lib/hooks/useAuth'
@@ -161,13 +162,22 @@ export function Navbar({
         </nav>
 
         {/* Auth / Profile */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-shrink-0 items-center gap-2">
           {!isAuthed ? (
             <>
+              {/* Icon-only login on xs screens */}
+              <button
+                onClick={() => onAuth('login')}
+                aria-label="Log in"
+                className="flex size-10 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary sm:hidden"
+              >
+                <LogIn className="size-4" />
+              </button>
               <UIButton
                 variant="outline"
                 size="sm"
                 onClick={() => onAuth('login')}
+                className="hidden sm:inline-flex"
               >
                 Log In
               </UIButton>
