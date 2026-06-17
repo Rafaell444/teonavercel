@@ -23,6 +23,7 @@ import {
   ListChecks,
   Menu,
   X,
+  ShieldAlert,
 } from 'lucide-react'
 import { UIButton, UICard, UIInput, Eyebrow, UIBadge } from '@/components/ui-kit'
 import { tiers, growthMilestones } from '@/lib/mock-data'
@@ -33,6 +34,7 @@ import { useTests } from '@/lib/hooks/useTests'
 import { useDiary, addDiaryEntry } from '@/lib/hooks/useDiary'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n'
 
 type Tab =
   | 'Overview'
@@ -583,6 +585,7 @@ function MyTestsTab() {
 /* ----------------------------- Tab: Diary ----------------------------- */
 function DiaryTab() {
   const { diary } = useDiary()
+  const t = useT()
   const [draft, setDraft] = useState('')
   const [diaryError, setDiaryError] = useState('')
 
@@ -605,17 +608,21 @@ function DiaryTab() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader eyebrow="Reflections" title="Your diary" />
+      <SectionHeader eyebrow={t('dashboard.diary.eyebrow')} title={t('dashboard.diary.title')} />
+      <div className="flex items-start gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
+        <ShieldAlert className="mt-0.5 size-5 shrink-0" />
+        <p><strong>{t('dashboard.diary.privacy_bold')}</strong> {t('dashboard.diary.privacy')}</p>
+      </div>
       <UICard className="p-6">
         <form onSubmit={addEntry} className="flex flex-col gap-3 sm:flex-row">
           <UIInput
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="What did you notice today?"
+            placeholder={t('dashboard.diary.placeholder')}
             className="flex-1"
           />
           <UIButton type="submit" className="shrink-0">
-            Add entry
+            {t('dashboard.diary.add')}
             <Plus className="size-4" />
           </UIButton>
         </form>

@@ -13,8 +13,9 @@ class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
         fields = [
-            "id", "title", "description", "price", "session_type",
-            "format", "location", "location_maps_url", "max_seats",
+            "id", "title", "title_ka", "description", "description_ka",
+            "price", "session_type", "format", "language",
+            "location", "location_maps_url", "max_seats",
             "is_active", "created_at",
         ]
         read_only_fields = ["id", "created_at"]
@@ -92,7 +93,8 @@ class PackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Package
         fields = [
-            "id", "title", "description", "price", "duration_months",
+            "id", "title", "title_ka", "description", "description_ka",
+            "price", "duration_months",
             "is_active", "created_at", "session_ids", "sessions_detail",
         ]
         read_only_fields = ["id", "created_at"]

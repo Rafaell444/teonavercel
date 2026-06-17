@@ -8,8 +8,11 @@ import { useSiteSettings } from '@/lib/hooks/useContent'
 import { sendMessage } from '@/lib/hooks/useMessages'
 import { getErrorMessage } from '@/lib/api'
 import { SiteFooter } from '@/components/site-footer'
+import { ConsultationCTA } from '@/components/consultation-modal'
+import { useT } from '@/lib/i18n'
 
-export function ContactPage() {
+export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => void } = {}) {
+  const t = useT()
   const { settings } = useSiteSettings()
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
@@ -53,13 +56,12 @@ export function ContactPage() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-2xl"
         >
-          <Eyebrow>Get in touch</Eyebrow>
+          <Eyebrow>{t('contact.eyebrow')}</Eyebrow>
           <h1 className="mt-4 font-heading text-4xl font-bold leading-[1.1] tracking-tight text-balance sm:text-6xl">
-            Let&apos;s start the conversation.
+            {t('contact.title')}
           </h1>
           <p className="mt-6 text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Questions about coaching, therapy, or which path is right for you? Reach
-            out — we usually reply within one business day.
+            {t('contact.subtitle')}
           </p>
         </motion.div>
 
@@ -89,9 +91,9 @@ export function ContactPage() {
                 <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Check className="size-7" />
                 </div>
-                <h3 className="mt-5 font-heading text-2xl font-bold">Message sent</h3>
+                <h3 className="mt-5 font-heading text-2xl font-bold">{t('contact.sent.title')}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Thanks for reaching out. We&apos;ll be in touch shortly.
+                  {t('contact.sent.body')}
                 </p>
               </div>
             ) : (
@@ -99,11 +101,11 @@ export function ContactPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      Name
+                      {t('contact.name')}
                     </label>
                     <UIInput
                       type="text"
-                      placeholder="Your name"
+                      placeholder={t('contact.placeholder.name')}
                       required
                       value={form.name}
                       onChange={set('name')}
@@ -111,11 +113,11 @@ export function ContactPage() {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      Email
+                      {t('contact.email')}
                     </label>
                     <UIInput
                       type="email"
-                      placeholder="you@email.com"
+                      placeholder={t('contact.placeholder.email')}
                       required
                       value={form.email}
                       onChange={set('email')}
@@ -124,11 +126,11 @@ export function ContactPage() {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Subject
+                    {t('contact.subject')}
                   </label>
                   <UIInput
                     type="text"
-                    placeholder="How can we help?"
+                    placeholder={t('contact.placeholder.subject')}
                     required
                     value={form.subject}
                     onChange={set('subject')}
@@ -136,14 +138,14 @@ export function ContactPage() {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Message
+                    {t('contact.message')}
                   </label>
                   <textarea
                     required
                     rows={5}
                     value={form.message}
                     onChange={set('message')}
-                    placeholder="Tell us a little about what you're looking for…"
+                    placeholder={t('contact.placeholder.message')}
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   />
                 </div>
@@ -151,15 +153,17 @@ export function ContactPage() {
                   <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">{error}</p>
                 )}
                 <UIButton type="submit" size="lg" className="mt-2 w-full sm:w-auto sm:self-start" disabled={submitting}>
-                  {submitting ? 'Sending…' : 'Send message'}
+                  {submitting ? t('contact.sending') : t('contact.send')}
                   {!submitting && <Send className="size-4" />}
                 </UIButton>
               </form>
             )}
           </UICard>
         </div>
+
+        <ConsultationCTA />
       </div>
-      <SiteFooter />
+      <SiteFooter onNavigate={onNavigate} />
     </div>
   )
 }

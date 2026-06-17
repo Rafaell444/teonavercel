@@ -7,10 +7,13 @@ import { apiFetch } from '@/lib/api'
 export interface Session {
   id: string
   title: string
+  title_ka: string
   description: string
+  description_ka: string
   price: number
   session_type: 'group' | 'individual'
   format: 'online' | 'offline' | 'hybrid'
+  language: 'both' | 'ka' | 'en'
   location: string
   location_maps_url: string
   max_seats: number
@@ -55,7 +58,9 @@ export interface GroupSessionSeat {
 export interface Package {
   id: string
   title: string
+  title_ka: string
   description: string
+  description_ka: string
   price: number
   duration_months: number
   is_active: boolean

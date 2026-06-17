@@ -11,7 +11,9 @@ import {
   X,
 } from 'lucide-react'
 import { UIButton } from '@/components/ui-kit'
+import { LocaleSwitcher } from '@/components/locale-switcher'
 import { useMe } from '@/lib/hooks/useAuth'
+import { useT } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 export type NavView =
@@ -23,6 +25,10 @@ export type NavView =
   | 'quiz'
   | 'about'
   | 'contact'
+  | 'privacy'
+  | 'terms'
+  | 'cookies'
+  | 'pillar-detail'
 
 export function Navbar({
   current,
@@ -38,6 +44,7 @@ export function Navbar({
   onLogout: () => void
 }) {
   const { user: currentUser } = useMe()
+  const t = useT()
   const [sessionsOpen, setSessionsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -82,7 +89,7 @@ export function Navbar({
 
         <nav className="hidden items-center gap-1 md:flex">
           <button className={linkClass(current === 'about')} onClick={() => onNavigate('about')}>
-            About
+            {t('nav.about')}
           </button>
 
           {/* Sessions dropdown */}
@@ -96,7 +103,7 @@ export function Navbar({
               aria-expanded={sessionsOpen}
               aria-haspopup="true"
             >
-              Sessions
+              {t('nav.sessions')}
               <ChevronDown
                 className={cn('size-3.5 transition-transform', sessionsOpen && 'rotate-180')}
               />
@@ -112,9 +119,9 @@ export function Navbar({
                 >
                   <Users className="mt-0.5 size-4 text-primary" />
                   <span>
-                    <span className="block text-sm font-semibold">Group Sessions</span>
+                    <span className="block text-sm font-semibold">{t('nav.groups')}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Round-table breakthrough circles
+                      {t('nav.groups.desc')}
                     </span>
                   </span>
                 </button>
@@ -127,9 +134,9 @@ export function Navbar({
                 >
                   <UserRound className="mt-0.5 size-4 text-primary" />
                   <span>
-                    <span className="block text-sm font-semibold">Individual Sessions</span>
+                    <span className="block text-sm font-semibold">{t('nav.sessions')}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Private 1:1 coaching &amp; therapy
+                      {t('nav.individual.desc')}
                     </span>
                   </span>
                 </button>
@@ -142,9 +149,9 @@ export function Navbar({
                 >
                   <LayoutDashboard className="mt-0.5 size-4 text-primary" />
                   <span>
-                    <span className="block text-sm font-semibold">Packages</span>
+                    <span className="block text-sm font-semibold">{t('nav.packages')}</span>
                     <span className="block text-xs text-muted-foreground">
-                      Complete transformation bundles
+                      {t('nav.packages.desc')}
                     </span>
                   </span>
                 </button>
@@ -153,15 +160,16 @@ export function Navbar({
           </div>
 
           <button className={linkClass(current === 'quiz')} onClick={() => onNavigate('quiz')}>
-            Vibe Check
+            {t('nav.tests')}
           </button>
           <button className={linkClass(current === 'contact')} onClick={() => onNavigate('contact')}>
-            Contact
+            {t('nav.contact')}
           </button>
         </nav>
 
         {/* Auth / Profile */}
         <div className="flex items-center gap-2">
+          <LocaleSwitcher />
           {!isAuthed ? (
             <>
               <UIButton
@@ -169,10 +177,10 @@ export function Navbar({
                 size="sm"
                 onClick={() => onAuth('login')}
               >
-                Log In
+                {t('nav.login')}
               </UIButton>
               <UIButton size="sm" onClick={() => onAuth('register')} className="hidden sm:inline-flex">
-                Sign Up
+                {t('nav.signup')}
               </UIButton>
             </>
           ) : (
@@ -202,7 +210,7 @@ export function Navbar({
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-secondary"
                   >
                     <LayoutDashboard className="size-4" />
-                    Dashboard
+                    {t('nav.dashboard')}
                   </button>
                   <button
                     onClick={() => {
@@ -212,7 +220,7 @@ export function Navbar({
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                   >
                     <LogOut className="size-4" />
-                    Log Out
+                    {t('nav.logout')}
                   </button>
                 </div>
               )}
@@ -235,12 +243,12 @@ export function Navbar({
       {mobileOpen && (
         <div className="mx-auto mt-2 max-w-5xl overflow-hidden rounded-3xl border border-border bg-card p-2 shadow-xl md:hidden">
           {[
-            { label: 'About', view: 'about' as NavView },
-            { label: 'Group Sessions', view: 'roundtable' as NavView },
-            { label: 'Individual Sessions', view: 'booking' as NavView },
-            { label: 'Packages', view: 'packages' as NavView },
-            { label: 'Vibe Check', view: 'quiz' as NavView },
-            { label: 'Contact', view: 'contact' as NavView },
+            { label: t('nav.about'), view: 'about' as NavView },
+            { label: t('nav.groups'), view: 'roundtable' as NavView },
+            { label: t('nav.sessions'), view: 'booking' as NavView },
+            { label: t('nav.packages'), view: 'packages' as NavView },
+            { label: t('nav.tests'), view: 'quiz' as NavView },
+            { label: t('nav.contact'), view: 'contact' as NavView },
           ].map((item) => (
             <button
               key={item.label}

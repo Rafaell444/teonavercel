@@ -3,11 +3,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { CalendarDays, Clock, MapPin, Monitor, Check, X } from 'lucide-react'
 import { UIButton, UICard, Eyebrow } from '@/components/ui-kit'
+import { ConsultationCTA } from '@/components/consultation-modal'
 import { useSessions, useGroupSchedules, useGroupSeats, claimGroupSeat, releaseGroupSeat } from '@/lib/hooks/useSessions'
 import type { GroupSeatPurchaseResult } from '@/lib/hooks/useSessions'
 import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { useT, useLocalized, useLocale } from '@/lib/i18n'
 
 function useCountUp(target: number, duration = 1200) {
   const [count, setCount] = useState(0)
@@ -28,7 +30,11 @@ function useCountUp(target: number, duration = 1200) {
 
 export default function RoundTable() {
   const { user: currentUser } = useMe()
-  const { sessions } = useSessions('group')
+  const t = useT()
+  const l = useLocalized()
+  const locale = useLocale()
+  const { sessions: allSessions } = useSessions('group')
+  const sessions = allSessions.filter(s => s.language === 'both' || s.language === locale)
   const [selectedSession, setSelectedSession] = useState<string>('')
   const [selectedSchedule, setSelectedSchedule] = useState<string>('')
   const [seatError, setSeatError] = useState('')
@@ -87,9 +93,9 @@ export default function RoundTable() {
     return (
       <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="group-sessions">
         <div className="mx-auto max-w-4xl px-6 text-center">
-          <Eyebrow>Group Sessions</Eyebrow>
-          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">No group sessions available</h2>
-          <p className="mt-4 text-muted-foreground">Check back soon for upcoming group coaching sessions.</p>
+          <Eyebrow>{t('groups.eyebrow')}</Eyebrow>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t('groups.no_sessions')}</h2>
+          <p className="mt-4 text-muted-foreground">{t('groups.no_sessions_sub')}</p>
         </div>
       </section>
     )
@@ -99,12 +105,12 @@ export default function RoundTable() {
     <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="group-sessions">
       <div className="mx-auto max-w-4xl px-6">
         <div className="text-center mb-10">
-          <Eyebrow>Group Sessions</Eyebrow>
+          <Eyebrow>{t('groups.eyebrow')}</Eyebrow>
           <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-            {activeSession?.title || 'The Breakthrough Circle'}
+            {l(activeSession?.title, activeSession?.title_ka) || 'The Breakthrough Circle'}
           </h2>
           <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
-            Choose your seat, confirm your booking, and pay to secure your spot.
+            {t('groups.click_seat')}
           </p>
         </div>
 
@@ -112,7 +118,7 @@ export default function RoundTable() {
           <div className="flex flex-wrap justify-center gap-2 mb-6">
             {sessions.map(s => (
               <button key={s.id} onClick={() => { setSelectedSession(s.id); setSelectedSchedule(''); setPendingSeat(null); setPurchaseResult(null) }} className={cn('px-4 py-2 rounded-full text-sm font-medium border transition-all', activeSessionId === s.id ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/50')}>
-                {s.title}
+                {l(s.title, s.title_ka)}
               </button>
             ))}
           </div>
@@ -220,7 +226,7 @@ export default function RoundTable() {
           <UICard className="mt-6 mx-auto max-w-md p-6 border-primary/30">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-heading text-lg font-bold">Confirm your seat</h3>
+                <h3 className="font-heading text-lg font-bold">{t('groups.confirm_seat')}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Seat #{pendingSeat} · {activeSession.title}
                 </p>
@@ -240,9 +246,9 @@ export default function RoundTable() {
               </div>
             </div>
             <UIButton className="mt-5 w-full" onClick={handleConfirmPurchase} disabled={purchasing}>
-              {purchasing ? 'Processing...' : 'Confirm & Pay'}
+              {purchasing ? t('groups.processing') : t('groups.confirm_pay')}
             </UIButton>
-            <p className="mt-2 text-center text-xs text-muted-foreground">Payment is mocked — your seat is confirmed immediately.</p>
+            <p className="mt-2 text-center text-xs text-muted-foreground">{t('groups.payment_note')}</p>
           </UICard>
         )}
 
@@ -250,15 +256,12 @@ export default function RoundTable() {
         <UICard className="mt-8 mx-auto max-w-md p-5 text-center">
           {mySeat ? (
             <>
-              <p className="text-sm font-medium">You have <strong>Seat #{mySeat.seat_number}</strong> — booking confirmed</p>
-              <UIButton size="sm" variant="outline" className="mt-3" onClick={() => handleRelease(mySeat.seat_number)}>
-                Cancel reservation
-              </UIButton>
+              <p className="text-sm font-medium">Seat #{mySeat.seat_number} — {t('groups.seat_confirmed')}</p>
             </>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">{total - filled} seats remaining</p>
-              <p className="mt-1 text-xs text-muted-foreground">Click an empty seat, then confirm and pay.</p>
+              <p className="text-sm text-muted-foreground">{total - filled} {t('groups.seats_remaining')}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('groups.click_seat')}</p>
               {activeSession && <p className="mt-2 font-heading text-lg font-bold text-primary">${activeSession.price}/seat</p>}
             </>
           )}
@@ -280,6 +283,8 @@ export default function RoundTable() {
             </div>
           </UICard>
         )}
+
+        <ConsultationCTA />
       </div>
     </section>
   )

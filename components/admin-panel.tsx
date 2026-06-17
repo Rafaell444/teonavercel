@@ -44,7 +44,9 @@ import { useVouchers, createVoucher, updateVoucher, deleteVoucher } from '@/lib/
 import type { Voucher } from '@/lib/hooks/useVouchers'
 import { useTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } from '@/lib/hooks/useTestimonials'
 import { useMessages, markMessageRead, deleteMessage } from '@/lib/hooks/useMessages'
-import { usePillars, useSiteSettings, updateSiteSettings, createPillar, updatePillar, deletePillar } from '@/lib/hooks/useContent'
+import { usePillars, useSiteSettings, updateSiteSettings, updateSiteSettingsWithImage, createPillar, updatePillar, deletePillar, useCertificates, uploadCertificate, deleteCertificate } from '@/lib/hooks/useContent'
+import { useConsultationSlots, useConsultationBookings, createConsultationSlot, deleteConsultationSlot } from '@/lib/hooks/useConsultations'
+import type { ConsultationSlot, ConsultationBooking } from '@/lib/hooks/useConsultations'
 import { useMe } from '@/lib/hooks/useAuth'
 import type { AppUser } from '@/lib/hooks/useAuth'
 import type { TestQuestion } from '@/lib/hooks/useTests'
@@ -64,6 +66,7 @@ type AdminTab =
   | 'Sessions'
   | 'Packages'
   | 'Vouchers'
+  | 'Consultations'
   | 'Testimonials'
   | 'Messages'
   | 'Content'
@@ -78,6 +81,7 @@ const tabs: { label: AdminTab; icon: typeof Users }[] = [
   { label: 'Sessions', icon: GraduationCap },
   { label: 'Packages', icon: Sparkles },
   { label: 'Vouchers', icon: Star },
+  { label: 'Consultations', icon: Phone },
   { label: 'Testimonials', icon: Quote },
   { label: 'Messages', icon: Mail },
   { label: 'Content', icon: Settings },
@@ -827,6 +831,8 @@ function SessionsTab() {
   const [subTab, setSubTab] = useState<'group' | 'individual'>('individual')
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
+  const [titleKa, setTitleKa] = useState('')
+  const [sessionLang, setSessionLang] = useState<'both' | 'ka' | 'en'>('both')
   const [price, setPrice] = useState('')
   const [format, setFormat] = useState<'online' | 'offline' | 'hybrid'>('online')
   const [location, setLocation] = useState('')
@@ -840,6 +846,8 @@ function SessionsTab() {
     try {
       await createSession({
         title: title.trim(),
+        title_ka: titleKa.trim(),
+        language: sessionLang,
         price: Number(price) || 0,
         session_type: subTab,
         format: subTab === 'group' ? 'hybrid' : format,
@@ -847,7 +855,7 @@ function SessionsTab() {
         location_maps_url: subTab === 'individual' ? mapsUrl.trim() : '',
         max_seats: subTab === 'group' ? (Number(maxSeats) || 12) : 1,
       })
-      setTitle(''); setPrice(''); setLocation(''); setMapsUrl(''); setMaxSeats('12'); setShowForm(false)
+      setTitle(''); setTitleKa(''); setPrice(''); setLocation(''); setMapsUrl(''); setMaxSeats('12'); setShowForm(false)
     } catch (e) { setError(getErrorMessage(e)) }
   }
 
@@ -873,8 +881,20 @@ function SessionsTab() {
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Title</label>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Title (EN)</label>
               <UIInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Executive Coaching" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Title (KA)</label>
+              <UIInput value={titleKa} onChange={(e) => setTitleKa(e.target.value)} placeholder="სათაური ქართულად" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Language</label>
+              <select value={sessionLang} onChange={(e) => setSessionLang(e.target.value as typeof sessionLang)} className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm">
+                <option value="both">Both (KA & EN)</option>
+                <option value="ka">Georgian only</option>
+                <option value="en">English only</option>
+              </select>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Price {subTab === 'group' ? '/ seat ($)' : '/ session ($)'}</label>
@@ -1595,8 +1615,90 @@ function MessagesTab() {
   )
 }
 
+/* =============================== Consultations =============================== */
+function ConsultationsTab() {
+  const { slots } = useConsultationSlots()
+  const { bookings } = useConsultationBookings()
+  const [date, setDate] = useState('')
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
+  const [error, setError] = useState('')
+
+  const handleAdd = async () => {
+    if (!date || !startTime || !endTime) return
+    setError('')
+    try {
+      await createConsultationSlot({ date, start_time: startTime, end_time: endTime })
+      setDate('')
+      setStartTime('')
+      setEndTime('')
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+
+  return (
+    <div className="space-y-8">
+      <Eyebrow>Consultations</Eyebrow>
+      <h2 className="font-heading text-2xl font-bold tracking-tight">Free Consultation Slots</h2>
+
+      <UICard className="p-5 space-y-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Add a slot</h3>
+        <div className="grid gap-3 sm:grid-cols-4">
+          <UIInput type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <UIInput type="time" value={startTime} onChange={e => setStartTime(e.target.value)} placeholder="Start" />
+          <UIInput type="time" value={endTime} onChange={e => setEndTime(e.target.value)} placeholder="End" />
+          <UIButton onClick={handleAdd}><Plus className="size-4" /> Add Slot</UIButton>
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+      </UICard>
+
+      <UICard className="p-5">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">All Slots</h3>
+        {slots.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No slots configured yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {slots.map(slot => (
+              <div key={slot.id} className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="font-medium">{slot.date}</span>
+                  <span>{slot.start_time?.slice(0,5)} – {slot.end_time?.slice(0,5)}</span>
+                  {slot.is_booked && <UIBadge className="bg-amber-500/10 text-amber-700 border-amber-500/30">Booked{slot.booked_by_name ? ` by ${slot.booked_by_name}` : ''}</UIBadge>}
+                </div>
+                <button onClick={() => deleteConsultationSlot(slot.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="size-4" /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </UICard>
+
+      <UICard className="p-5">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Consultation Bookings</h3>
+        {bookings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No bookings yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {bookings.map(b => (
+              <div key={b.id} className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
+                <div className="flex flex-col gap-0.5 text-sm">
+                  <span className="font-medium">{b.user_name} ({b.user_email})</span>
+                  <span className="text-muted-foreground">{b.date} {b.start_time?.slice(0,5)} – {b.end_time?.slice(0,5)}</span>
+                </div>
+                <a href={b.meet_link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
+                  Meet Link
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+      </UICard>
+    </div>
+  )
+}
+
 /* =============================== Content / Settings =============================== */
-type ContentSection = 'hero' | 'contact' | 'stats' | 'pillars'
+type ContentSection = 'hero' | 'contact' | 'stats' | 'pillars' | 'certificates'
 
 function ContentTab() {
   const { settings } = useSiteSettings()
@@ -1640,6 +1742,7 @@ function ContentTab() {
     { key: 'contact', label: 'Contact Info', icon: Phone },
     { key: 'stats', label: 'Stats', icon: BarChart3 },
     { key: 'pillars', label: 'Pillars', icon: GraduationCap },
+    { key: 'certificates', label: 'Certificates', icon: Star },
   ]
 
   return (
@@ -1700,6 +1803,55 @@ function ContentTab() {
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Footer Tagline</label>
               <textarea value={currentDraft.footerTagline ?? ''} onChange={(e) => setDraft({ ...currentDraft, footerTagline: e.target.value })} rows={2} placeholder="Short footer description shown under the brand name…" className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+            </div>
+            <hr className="border-border" />
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Georgian translations (KA)</p>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Hero Badge (KA)</label>
+              <UIInput value={currentDraft.heroBadgeKa ?? ''} onChange={(e) => setDraft({ ...currentDraft, heroBadgeKa: e.target.value })} placeholder="ბეჯი ქართულად" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Hero Title (KA)</label>
+                <UIInput value={currentDraft.heroTitleKa ?? ''} onChange={(e) => setDraft({ ...currentDraft, heroTitleKa: e.target.value })} placeholder="სათაური ქართულად" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Hero Highlight (KA)</label>
+                <UIInput value={currentDraft.heroHighlightKa ?? ''} onChange={(e) => setDraft({ ...currentDraft, heroHighlightKa: e.target.value })} placeholder="ხაზგასმული სიტყვა" />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Hero Subtitle (KA)</label>
+              <textarea value={currentDraft.heroSubtitleKa ?? ''} onChange={(e) => setDraft({ ...currentDraft, heroSubtitleKa: e.target.value })} rows={3} placeholder="ქვესათაური ქართულად" className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Footer Tagline (KA)</label>
+              <textarea value={currentDraft.footerTaglineKa ?? ''} onChange={(e) => setDraft({ ...currentDraft, footerTaglineKa: e.target.value })} rows={2} placeholder="ქვედა ტექსტი ქართულად" className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+            </div>
+            <hr className="border-border" />
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Hero Background Image</label>
+              {settings?.heroImage && (
+                <img src={settings.heroImage} alt="Hero preview" className="mb-2 h-24 w-auto rounded-lg object-cover" />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const fd = new FormData()
+                  fd.append('heroImage', file)
+                  try {
+                    await updateSiteSettingsWithImage(fd)
+                    setSaved(true)
+                    setTimeout(() => setSaved(false), 2500)
+                  } catch (err) {
+                    setContentError(getErrorMessage(err))
+                  }
+                }}
+                className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-primary/20"
+              />
             </div>
           </div>
           <div className="mt-5 rounded-2xl border border-dashed border-border bg-secondary/50 p-5">
@@ -1766,7 +1918,7 @@ function ContentTab() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-heading text-base font-bold flex items-center gap-2"><GraduationCap className="size-4 text-primary" /> Pillar Cards</h3>
-            <UIButton size="sm" onClick={() => { const np: Pillar = { id: '', title: '', blurb: '', points: [''], order: 0 }; startEditPillar(np) }}>
+            <UIButton size="sm" onClick={() => { const np: Pillar = { id: '', title: '', title_ka: '', blurb: '', blurb_ka: '', points: [''], points_ka: [], order: 0, long_description: '', long_description_ka: '', history: '', history_ka: '' }; startEditPillar(np) }}>
               <Plus className="size-4" /> Add pillar
             </UIButton>
           </div>
@@ -1787,6 +1939,38 @@ function ContentTab() {
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Bullet points (one per line)</label>
                     <textarea rows={3} value={pillarDraft.points.join('\n')} onChange={(e) => setPillarDraft({ ...pillarDraft, points: e.target.value.split('\n') })} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Long Description (detail page)</label>
+                    <textarea rows={4} value={pillarDraft.long_description ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, long_description: e.target.value })} placeholder="Detailed description shown on the pillar detail page..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">History / Background</label>
+                    <textarea rows={3} value={pillarDraft.history ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, history: e.target.value })} placeholder="Background and history of this practice..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+                  </div>
+                  <hr className="border-border" />
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Georgian translations (KA)</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Title (KA)</label>
+                      <UIInput value={pillarDraft.title_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, title_ka: e.target.value })} placeholder="სათაური ქართულად" />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Blurb (KA)</label>
+                      <UIInput value={pillarDraft.blurb_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, blurb_ka: e.target.value })} placeholder="მოკლე აღწერა…" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Bullet points KA (one per line)</label>
+                    <textarea rows={3} value={(pillarDraft.points_ka || []).join('\n')} onChange={(e) => setPillarDraft({ ...pillarDraft, points_ka: e.target.value.split('\n') })} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Long Description KA</label>
+                    <textarea rows={4} value={pillarDraft.long_description_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, long_description_ka: e.target.value })} placeholder="დეტალური აღწერა ქართულად..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">History KA</label>
+                    <textarea rows={3} value={pillarDraft.history_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, history_ka: e.target.value })} placeholder="ისტორია ქართულად..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
                   </div>
                   <div className="flex gap-2">
                     <UIButton size="sm" onClick={savePillarEdit}><Check className="size-3.5" /> Save</UIButton>
@@ -1814,6 +1998,75 @@ function ContentTab() {
                 </div>
               )}
             </UICard>
+          ))}
+        </div>
+      )}
+
+      {section === 'certificates' && (
+        <UICard className="p-6">
+          <h3 className="mb-5 font-heading text-base font-bold flex items-center gap-2"><Star className="size-4 text-primary" /> Certificates</h3>
+          <CertificatesAdmin />
+        </UICard>
+      )}
+    </div>
+  )
+}
+
+function CertificatesAdmin() {
+  const { certificates } = useCertificates()
+  const [title, setTitle] = useState('')
+  const [error, setError] = useState('')
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setError('')
+    const fd = new FormData()
+    fd.append('title', title || file.name.replace(/\.\w+$/, ''))
+    fd.append('image', file)
+    fd.append('order', String(certificates.length))
+    try {
+      await uploadCertificate(fd)
+      setTitle('')
+      e.target.value = ''
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Certificate Title</label>
+          <UIInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="ICF Accreditation" />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleUpload}
+            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-primary/20"
+          />
+        </div>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {certificates.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No certificates uploaded yet.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          {certificates.map((cert) => (
+            <div key={cert.id} className="relative rounded-xl border border-border bg-card p-2">
+              <img src={cert.image} alt={cert.title} className="aspect-[4/3] w-full rounded-lg object-contain" />
+              <p className="mt-1.5 truncate text-xs font-medium">{cert.title}</p>
+              <button
+                onClick={() => deleteCertificate(cert.id)}
+                className="absolute right-2 top-2 rounded-full bg-destructive/10 p-1 text-destructive hover:bg-destructive hover:text-white transition-colors"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -1918,6 +2171,7 @@ export function AdminPanel() {
           {tab === 'Sessions' && <SessionsTab />}
           {tab === 'Packages' && <PackagesTab />}
           {tab === 'Vouchers' && <VouchersTab />}
+          {tab === 'Consultations' && <ConsultationsTab />}
           {tab === 'Testimonials' && <TestimonialsTab />}
           {tab === 'Messages' && <MessagesTab />}
           {tab === 'Content' && <ContentTab />}

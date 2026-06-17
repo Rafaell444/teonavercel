@@ -16,12 +16,21 @@ class Session(models.Model):
         ("hybrid", "Hybrid"),
     ]
 
+    LANGUAGE_CHOICES = [
+        ("both", "Both"),
+        ("ka", "Georgian"),
+        ("en", "English"),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
+    title_ka = models.CharField(max_length=200, blank=True, default="")
     description = models.TextField(blank=True, default="")
+    description_ka = models.TextField(blank=True, default="")
     price = models.DecimalField(max_digits=8, decimal_places=2)
     session_type = models.CharField(max_length=20, choices=SESSION_TYPE_CHOICES)
     format = models.CharField(max_length=10, choices=FORMAT_CHOICES, default="online")
+    language = models.CharField(max_length=4, choices=LANGUAGE_CHOICES, default="both")
     location = models.CharField(max_length=300, blank=True, default="")
     location_maps_url = models.URLField(blank=True, default="")
     max_seats = models.PositiveIntegerField(default=12, help_text="For group sessions")
@@ -104,7 +113,9 @@ class GroupSessionSeat(models.Model):
 class Package(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
+    title_ka = models.CharField(max_length=200, blank=True, default="")
     description = models.TextField(blank=True, default="")
+    description_ka = models.TextField(blank=True, default="")
     sessions = models.ManyToManyField(Session, related_name="packages", blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     duration_months = models.PositiveIntegerField(

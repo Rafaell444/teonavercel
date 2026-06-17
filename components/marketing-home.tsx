@@ -16,6 +16,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { useEvents } from '@/lib/hooks/useEvents'
 import { useTestimonials } from '@/lib/hooks/useTestimonials'
 import { usePillars, useSiteSettings } from '@/lib/hooks/useContent'
+import { ConsultationButton, ConsultationCTA } from '@/components/consultation-modal'
+import { useT, useLocalized } from '@/lib/i18n'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -48,10 +50,12 @@ function Reveal({
 /* ----------------------------- Hero ----------------------------- */
 function Hero({ onBook, onQuiz }: { onBook: () => void; onQuiz: () => void }) {
   const { settings } = useSiteSettings()
+  const t = useT()
+  const l = useLocalized()
   return (
     <section className="relative isolate flex min-h-[100vh] items-center overflow-hidden bg-foreground">
       <Image
-        src="/hero.png"
+        src={settings?.heroImage ?? '/hero.png'}
         alt="Coach on stage in dramatic light"
         fill
         priority
@@ -67,29 +71,29 @@ function Hero({ onBook, onQuiz }: { onBook: () => void; onQuiz: () => void }) {
         >
           <UIBadge className="mb-6 border-background/20 bg-background/10 text-background">
             <Star className="size-3 fill-primary text-primary" />
-            {settings?.heroBadge}
+            {l(settings?.heroBadge, settings?.heroBadgeKa)}
           </UIBadge>
           <h1 className="font-heading text-4xl font-bold leading-[1.07] tracking-tight text-balance sm:text-6xl lg:text-7xl">
-            {settings?.heroTitle}{' '}
-            <span className="text-primary italic">{settings?.heroHighlight}</span>{' '}
-            is waiting for.
+            {l(settings?.heroTitle, settings?.heroTitleKa)}{' '}
+            <span className="text-primary italic">{l(settings?.heroHighlight, settings?.heroHighlightKa)}</span>{' '}
+            {t('hero.suffix')}
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-background/75 sm:text-lg">
-            {settings?.heroSubtitle}
+            {l(settings?.heroSubtitle, settings?.heroSubtitleKa)}
           </p>
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-            <UIButton size="lg" onClick={onBook} className="w-full sm:w-auto">
-              Book a Session
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+            <UIButton onClick={onBook} className="w-full sm:w-auto">
+              {t('hero.book')}
               <ArrowRight className="size-4" />
             </UIButton>
             <UIButton
               variant="ghost"
-              size="lg"
               onClick={onQuiz}
               className="w-full text-background sm:w-auto"
             >
-              Take the Vibe Check
+              {t('hero.quiz')}
             </UIButton>
+            <ConsultationButton className="w-full border-background/40 text-background hover:bg-background/10 sm:w-auto" />
           </div>
         </motion.div>
       </div>
@@ -183,36 +187,40 @@ function EventsCarousel({ onBook }: { onBook: () => void }) {
 }
 
 /* ----------------------------- Pillars ----------------------------- */
-function Pillars() {
+function Pillars({ onPillarClick }: { onPillarClick: (id: string) => void }) {
   const { pillars } = usePillars()
+  const t = useT()
+  const l = useLocalized()
   return (
     <section id="pillars" className="bg-secondary py-24">
       <div className="mx-auto max-w-7xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <Eyebrow>The Practice</Eyebrow>
+          <Eyebrow>{t('pillars.eyebrow')}</Eyebrow>
           <h2 className="mt-3 font-heading text-4xl font-bold tracking-tight text-balance sm:text-5xl">
-            Master every area of your life
+            {t('pillars.title')}
           </h2>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            Four disciplines, one integrated path. Choose where you begin —
-            we&apos;ll guide the rest.
+            {t('pillars.subtitle')}
           </p>
         </Reveal>
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {pillars.map((pillar, i) => (
             <Reveal key={pillar.title} delay={i * 0.08}>
-              <UICard className="group flex h-full flex-col p-7 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+              <UICard
+                className="group flex h-full cursor-pointer flex-col p-7 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
+                onClick={() => onPillarClick(pillar.id)}
+              >
                 <span className="font-heading text-5xl font-bold text-primary/30 transition-colors group-hover:text-primary">
                   0{i + 1}
                 </span>
                 <h3 className="mt-5 font-heading text-xl font-bold tracking-tight">
-                  {pillar.title}
+                  {l(pillar.title, pillar.title_ka)}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {pillar.blurb}
+                  {l(pillar.blurb, pillar.blurb_ka)}
                 </p>
                 <ul className="mt-5 space-y-2 border-t border-border pt-5">
-                  {pillar.points.map((point) => (
+                  {(l(pillar.points, pillar.points_ka) || []).map((point: string) => (
                     <li
                       key={point}
                       className="flex items-center gap-2 text-sm text-foreground/80"
@@ -226,6 +234,9 @@ function Pillars() {
             </Reveal>
           ))}
         </div>
+        <Reveal>
+          <ConsultationCTA />
+        </Reveal>
       </div>
     </section>
   )
@@ -296,10 +307,11 @@ function Testimonials() {
 /* ----------------------------- About ----------------------------- */
 function About({ onBook }: { onBook: () => void }) {
   const { settings } = useSiteSettings()
+  const t = useT()
   const stats = [
-    { stat: settings?.statHours, label: 'Coaching hours' },
-    { stat: settings?.statLives, label: 'Lives changed' },
-    { stat: settings?.statReturn, label: 'Would return' },
+    { stat: settings?.statHours, label: t('about.stat.hours') },
+    { stat: settings?.statLives, label: t('about.stat.lives') },
+    { stat: settings?.statReturn, label: t('about.stat.return') },
   ]
   return (
     <section id="about" className="bg-background py-24">
@@ -315,21 +327,13 @@ function About({ onBook }: { onBook: () => void }) {
           </div>
         </Reveal>
         <Reveal delay={0.1}>
-          <Eyebrow>The Hunger</Eyebrow>
+          <Eyebrow>{t('about.eyebrow')}</Eyebrow>
           <h2 className="mt-3 font-heading text-4xl font-bold leading-tight tracking-tight text-balance sm:text-5xl">
-            I built this from the bottom of my own rock bottom.
+            {t('about.title')}
           </h2>
           <div className="mt-6 space-y-5 text-muted-foreground leading-relaxed">
-            <p>
-              Fifteen years ago I was burned out, broke, and convinced change
-              wasn&apos;t for people like me. One honest conversation cracked
-              that story open — and everything shifted.
-            </p>
-            <p>
-              Since then I&apos;ve spent over 20,000 hours in the room with
-              founders, leaders, and people simply ready for more. No hype. No
-              shortcuts. Just deep, grounded work that lasts.
-            </p>
+            <p>{t('about.p1')}</p>
+            <p>{t('about.p2')}</p>
           </div>
           <div className="mt-8 flex flex-wrap gap-8">
             {stats.map((s) => (
@@ -342,7 +346,7 @@ function About({ onBook }: { onBook: () => void }) {
             ))}
           </div>
           <UIButton size="lg" onClick={onBook} className="mt-10">
-            Start your story
+            {t('about.cta')}
             <ArrowRight className="size-4" />
           </UIButton>
         </Reveal>
@@ -354,6 +358,7 @@ function About({ onBook }: { onBook: () => void }) {
 /* ----------------------------- Sticky CTA ----------------------------- */
 function StickyCTA({ onBook }: { onBook: () => void }) {
   const [show, setShow] = useState(false)
+  const t = useT()
   useEffect(() => {
     const onScroll = () => setShow(window.scrollY > 800)
     window.addEventListener('scroll', onScroll)
@@ -368,10 +373,10 @@ function StickyCTA({ onBook }: { onBook: () => void }) {
     >
       <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 rounded-2xl border border-border bg-card/95 p-4 shadow-2xl backdrop-blur sm:flex-row sm:pl-6">
         <p className="text-center font-heading text-lg font-semibold sm:text-left">
-          Ready to begin? Your first session is the hardest part.
+          {t('sticky.text')}
         </p>
         <UIButton onClick={onBook} className="w-full shrink-0 sm:w-auto">
-          Book a Session
+          {t('hero.book')}
           <ArrowRight className="size-4" />
         </UIButton>
       </div>
@@ -383,18 +388,22 @@ function StickyCTA({ onBook }: { onBook: () => void }) {
 export function MarketingHome({
   onBook,
   onQuiz,
+  onNavigate,
+  onPillarClick,
 }: {
   onBook: () => void
   onQuiz: () => void
+  onNavigate?: (view: string) => void
+  onPillarClick?: (pillarId: string) => void
 }) {
   return (
     <div className="bg-background">
       <Hero onBook={onBook} onQuiz={onQuiz} />
       <EventsCarousel onBook={onBook} />
-      <Pillars />
+      <Pillars onPillarClick={(id) => onPillarClick?.(id)} />
       <Testimonials />
       <About onBook={onBook} />
-      <SiteFooter />
+      <SiteFooter onNavigate={onNavigate} />
       <StickyCTA onBook={onBook} />
     </div>
   )

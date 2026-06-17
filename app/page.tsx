@@ -11,14 +11,20 @@ import PackageBooking from '@/components/package-booking'
 import { TestsPage } from '@/components/tests-page'
 import { AboutPage } from '@/components/about-page'
 import { ContactPage } from '@/components/contact-page'
+import { PillarDetailPage } from '@/components/pillar-detail-page'
+import { PrivacyPage } from '@/components/privacy-page'
+import { TermsPage } from '@/components/terms-page'
+import { CookiesPage } from '@/components/cookies-page'
 import { useEffect } from 'react'
 import { useMe, useLogout } from '@/lib/hooks/useAuth'
 import { bootstrapAccessToken } from '@/lib/api'
 import { SWRConfig } from 'swr'
+import { I18nProvider } from '@/lib/i18n'
 
 function AppShell() {
   const [view, setView] = useState<NavView>('home')
   const [authMode, setAuthMode] = useState<'login' | 'register' | null>(null)
+  const [selectedPillarId, setSelectedPillarId] = useState<string | null>(null)
   const { user: currentUser } = useMe()
   const logoutFn = useLogout()
   const isAuthed = !!currentUser
@@ -61,6 +67,8 @@ function AppShell() {
         <MarketingHome
           onBook={() => navigate('booking')}
           onQuiz={() => navigate('quiz')}
+          onNavigate={(v) => navigate(v as NavView)}
+          onPillarClick={(id) => { setSelectedPillarId(id); navigate('pillar-detail') }}
         />
       )}
       {view === 'panel' && <Dashboard onBook={() => navigate('booking')} />}
@@ -68,8 +76,19 @@ function AppShell() {
       {view === 'roundtable' && <RoundTable />}
       {view === 'packages' && <PackageBooking />}
       {view === 'quiz' && <TestsPage />}
-      {view === 'about' && <AboutPage onBook={() => navigate('booking')} />}
-      {view === 'contact' && <ContactPage />}
+      {view === 'pillar-detail' && selectedPillarId && (
+        <PillarDetailPage
+          pillarId={selectedPillarId}
+          onBook={() => navigate('booking')}
+          onBack={() => navigate('home')}
+          onNavigate={(v) => navigate(v as NavView)}
+        />
+      )}
+      {view === 'about' && <AboutPage onBook={() => navigate('booking')} onNavigate={(v) => navigate(v as NavView)} />}
+      {view === 'contact' && <ContactPage onNavigate={(v) => navigate(v as NavView)} />}
+      {view === 'privacy' && <PrivacyPage onNavigate={(v) => navigate(v as NavView)} />}
+      {view === 'terms' && <TermsPage onNavigate={(v) => navigate(v as NavView)} />}
+      {view === 'cookies' && <CookiesPage onNavigate={(v) => navigate(v as NavView)} />}
 
       {authMode && (
         <AuthModal
@@ -85,8 +104,10 @@ function AppShell() {
 
 export default function Page() {
   return (
-    <SWRConfig value={{ revalidateOnFocus: false }}>
-      <AppShell />
-    </SWRConfig>
+    <I18nProvider>
+      <SWRConfig value={{ revalidateOnFocus: false }}>
+        <AppShell />
+      </SWRConfig>
+    </I18nProvider>
   )
 }

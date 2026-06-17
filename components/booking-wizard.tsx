@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Tag,
 } from 'lucide-react'
+import { ConsultationCTA } from '@/components/consultation-modal'
 import { UIButton, UICard, Eyebrow } from '@/components/ui-kit'
 import { useSessions, useTimeSlots } from '@/lib/hooks/useSessions'
 import { createBooking } from '@/lib/hooks/useBookings'
@@ -20,8 +21,17 @@ import { validateVoucher } from '@/lib/hooks/useVouchers'
 import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n'
 
-const steps = ['Session', 'Number of Sessions', 'Date & Time', 'Format', 'Voucher', 'Confirm']
+const STEP_KEYS = [
+  'booking.step.session',
+  'booking.step.number',
+  'booking.step.datetime',
+  'booking.step.format',
+  'booking.language',
+  'booking.step.voucher',
+  'booking.step.confirm',
+] as const
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -100,6 +110,7 @@ function Calendar({ availableDates, selected, onSelect }: { availableDates: stri
 }
 
 export default function BookingWizard() {
+  const t = useT()
   const { user: currentUser } = useMe()
   const { sessions } = useSessions('individual')
   const [step, setStep] = useState(0)
@@ -109,6 +120,7 @@ export default function BookingWizard() {
   const [selectedSlotId, setSelectedSlotId] = useState('')
   const [time, setTime] = useState('')
   const [format, setFormat] = useState<'online' | 'offline'>('online')
+  const [sessionLang, setSessionLang] = useState<'ka' | 'en'>('ka')
   const [voucherCode, setVoucherCode] = useState('')
   const [voucherDiscount, setVoucherDiscount] = useState(0)
   const [voucherValid, setVoucherValid] = useState<boolean | null>(null)
@@ -116,6 +128,8 @@ export default function BookingWizard() {
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
   const [confirming, setConfirming] = useState(false)
+
+  const steps = STEP_KEYS.map(k => t(k))
 
   const selectedSession = sessions.find(s => s.id === sessionId) || sessions[0]
   const activeSessionId = sessionId || sessions[0]?.id || ''
@@ -145,6 +159,7 @@ export default function BookingWizard() {
       case 3: return true
       case 4: return true
       case 5: return true
+      case 6: return true
       default: return false
     }
   })()
@@ -227,7 +242,9 @@ export default function BookingWizard() {
           <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
             {/* Step 0: Choose session */}
             {step === 0 && (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <h3 className="text-center text-lg font-semibold mb-4">{t('booking.choose_session')}</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
                 {sessions.map((s) => (
                   <UICard
                     key={s.id}
@@ -239,13 +256,14 @@ export default function BookingWizard() {
                     <p className="mt-3 text-2xl font-bold text-primary">${s.price}<span className="text-sm font-normal text-muted-foreground">/session</span></p>
                   </UICard>
                 ))}
+                </div>
               </div>
             )}
 
             {/* Step 1: Number of sessions */}
             {step === 1 && (
               <div className="text-center space-y-6">
-                <p className="text-muted-foreground">Choose how many sessions you&apos;d like (3-7)</p>
+                <h3 className="text-lg font-semibold">{t('booking.how_many')}</h3>
                 <div className="flex items-center justify-center gap-6">
                   <button onClick={() => setNumSessions(Math.max(3, numSessions - 1))} className="flex size-12 items-center justify-center rounded-full border border-border text-lg font-bold hover:bg-secondary">-</button>
                   <span className="font-heading text-5xl font-bold text-primary">{numSessions}</span>
@@ -272,7 +290,7 @@ export default function BookingWizard() {
             {/* Step 2: Date & Time */}
             {step === 2 && (
               <div className="space-y-6">
-                <p className="text-center text-sm text-muted-foreground">This date and time is for your <strong>first session</strong>. You&apos;ll choose dates for subsequent sessions after each one.</p>
+                <h3 className="text-center text-lg font-semibold mb-2">{t('booking.pick_date')}</h3>
                 <Calendar availableDates={availableDates} selected={date} onSelect={(d) => { setDate(d); setTime(''); setSelectedSlotId('') }} />
                 {date && timesForDate.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
@@ -301,13 +319,15 @@ export default function BookingWizard() {
 
             {/* Step 3: Format */}
             {step === 3 && (
-              <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
+              <div>
+                <h3 className="text-center text-lg font-semibold mb-4">{t('booking.choose_format')}</h3>
+                <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
                 <UICard
                   onClick={() => setFormat('online')}
                   className={cn('cursor-pointer p-6 text-center transition-all', format === 'online' && 'border-primary ring-2 ring-primary/20')}
                 >
                   <Monitor className="mx-auto size-8 text-primary mb-3" />
-                  <h3 className="font-bold">Online</h3>
+                  <h3 className="font-bold">{t('booking.online')}</h3>
                   <p className="text-xs text-muted-foreground mt-1">Google Meet link will be generated</p>
                 </UICard>
                 <UICard
@@ -315,27 +335,51 @@ export default function BookingWizard() {
                   className={cn('cursor-pointer p-6 text-center transition-all', format === 'offline' && 'border-primary ring-2 ring-primary/20')}
                 >
                   <Users className="mx-auto size-8 text-primary mb-3" />
-                  <h3 className="font-bold">In-Person</h3>
+                  <h3 className="font-bold">{t('booking.offline')}</h3>
                   <p className="text-xs text-muted-foreground mt-1">Tbilisi location with directions</p>
                 </UICard>
+                </div>
               </div>
             )}
 
-            {/* Step 4: Voucher */}
+            {/* Step 4: Session Language */}
             {step === 4 && (
+              <div>
+                <h3 className="text-center text-lg font-semibold mb-4">{t('booking.language')}</h3>
+                <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
+                  <UICard
+                    onClick={() => setSessionLang('ka')}
+                    className={cn('cursor-pointer p-6 text-center transition-all', sessionLang === 'ka' && 'border-primary ring-2 ring-primary/20')}
+                  >
+                    <span className="mx-auto mb-3 block text-3xl">🇬🇪</span>
+                    <h3 className="font-bold">{t('booking.lang.ka')}</h3>
+                  </UICard>
+                  <UICard
+                    onClick={() => setSessionLang('en')}
+                    className={cn('cursor-pointer p-6 text-center transition-all', sessionLang === 'en' && 'border-primary ring-2 ring-primary/20')}
+                  >
+                    <span className="mx-auto mb-3 block text-3xl">🇬🇧</span>
+                    <h3 className="font-bold">{t('booking.lang.en')}</h3>
+                  </UICard>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: Voucher */}
+            {step === 5 && (
               <div className="max-w-md mx-auto space-y-4">
-                <p className="text-center text-muted-foreground">Have a promo code? Enter it below (optional).</p>
+                <h3 className="text-center text-lg font-semibold mb-2">{t('booking.voucher_code')}</h3>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Tag className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <input
                       value={voucherCode}
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherValid(null); setVoucherMsg('') }}
-                      placeholder="PROMO CODE"
+                      placeholder={t('booking.voucher_code')}
                       className="h-12 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm font-mono uppercase placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     />
                   </div>
-                  <UIButton onClick={handleValidateVoucher} disabled={!voucherCode.trim()}>Apply</UIButton>
+                  <UIButton onClick={handleValidateVoucher} disabled={!voucherCode.trim()}>{t('booking.apply')}</UIButton>
                 </div>
                 {voucherMsg && (
                   <p className={cn('text-sm', voucherValid ? 'text-emerald-600' : 'text-destructive')}>{voucherMsg}</p>
@@ -344,16 +388,17 @@ export default function BookingWizard() {
               </div>
             )}
 
-            {/* Step 5: Confirm */}
-            {step === 5 && selectedSession && (
+            {/* Step 6: Confirm */}
+            {step === 6 && selectedSession && (
               <UICard className="p-6 space-y-4 max-w-md mx-auto">
-                <h3 className="font-heading text-xl font-bold text-center">Confirm your booking</h3>
+                <h3 className="font-heading text-xl font-bold text-center">{t('booking.confirm_title')}</h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Session</span><span className="font-medium">{selectedSession.title}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Sessions</span><span className="font-medium">{numSessions}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('booking.step.session')}</span><span className="font-medium">{selectedSession.title}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('booking.sessions_count')}</span><span className="font-medium">{numSessions}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">First session date</span><span className="font-medium">{date?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Time</span><span className="font-medium">{time}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Format</span><span className="font-medium">{format === 'online' ? 'Online' : 'In-Person'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('booking.step.format')}</span><span className="font-medium">{format === 'online' ? t('booking.online') : t('booking.offline')}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('booking.language')}</span><span className="font-medium">{sessionLang === 'ka' ? t('booking.lang.ka') : t('booking.lang.en')}</span></div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Valid for</span>
                     <span className="font-medium">
@@ -377,18 +422,20 @@ export default function BookingWizard() {
         {/* Navigation */}
         <div className="mt-10 flex items-center justify-between">
           <UIButton variant="outline" onClick={() => setStep(step - 1)} disabled={step === 0}>
-            <ArrowLeft className="size-4" /> Back
+            <ArrowLeft className="size-4" /> {t('booking.back')}
           </UIButton>
           {step < steps.length - 1 ? (
             <UIButton onClick={() => setStep(step + 1)} disabled={!canContinue}>
-              Continue <ArrowRight className="size-4" />
+              {t('booking.continue')} <ArrowRight className="size-4" />
             </UIButton>
           ) : (
             <UIButton onClick={confirm} disabled={confirming || !currentUser}>
-              {confirming ? 'Booking...' : 'Confirm & Pay'} <Check className="size-4" />
+              {confirming ? t('booking.booking') : t('booking.confirm_pay')} <Check className="size-4" />
             </UIButton>
           )}
         </div>
+
+        <ConsultationCTA />
       </div>
     </section>
   )

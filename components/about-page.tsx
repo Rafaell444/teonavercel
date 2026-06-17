@@ -1,12 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import Image from 'next/image'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, X } from 'lucide-react'
 import { UIButton, Eyebrow } from '@/components/ui-kit'
 import { SiteFooter } from '@/components/site-footer'
+import { useCertificates } from '@/lib/hooks/useContent'
+import { useT } from '@/lib/i18n'
 
-export function AboutPage({ onBook }: { onBook: () => void }) {
+export function AboutPage({ onBook, onNavigate }: { onBook: () => void; onNavigate?: (view: string) => void }) {
+  const t = useT()
   return (
     <div className="bg-background pt-32">
       <div className="mx-auto max-w-7xl px-6">
@@ -16,13 +20,12 @@ export function AboutPage({ onBook }: { onBook: () => void }) {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto max-w-3xl text-center"
         >
-          <Eyebrow>About Ascend</Eyebrow>
+          <Eyebrow>{t('aboutPage.eyebrow')}</Eyebrow>
           <h1 className="mt-4 font-heading text-4xl font-bold leading-[1.1] tracking-tight text-balance sm:text-6xl">
-            Grounded work that lasts a lifetime.
+            {t('aboutPage.title')}
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-            Ascend is a premium coaching and therapy practice for people ready to do
-            the real work — no hype, no shortcuts, just deep transformation.
+            {t('aboutPage.subtitle')}
           </p>
         </motion.div>
 
@@ -69,16 +72,16 @@ export function AboutPage({ onBook }: { onBook: () => void }) {
         <div className="mt-24 grid gap-6 md:grid-cols-3">
           {[
             {
-              title: 'Depth over hype',
-              body: 'We go to the root, not the surface. Real change, not motivational sugar.',
+              title: t('aboutPage.values.depth'),
+              body: t('aboutPage.values.depthBody'),
             },
             {
-              title: 'Radical honesty',
-              body: 'You get the truth, delivered with care. Growth lives outside comfort.',
+              title: t('aboutPage.values.honesty'),
+              body: t('aboutPage.values.honestyBody'),
             },
             {
-              title: 'Lasting results',
-              body: 'The work is designed to integrate — so it holds long after we finish.',
+              title: t('aboutPage.values.results'),
+              body: t('aboutPage.values.resultsBody'),
             },
           ].map((v) => (
             <div key={v.title} className="rounded-2xl border border-border bg-card p-7">
@@ -87,8 +90,51 @@ export function AboutPage({ onBook }: { onBook: () => void }) {
             </div>
           ))}
         </div>
+
+        <CertificationsSection />
       </div>
-      <SiteFooter />
+      <div className="pb-24" />
+      <SiteFooter onNavigate={onNavigate} />
+    </div>
+  )
+}
+
+function CertificationsSection() {
+  const t = useT()
+  const { certificates } = useCertificates()
+  const [viewImage, setViewImage] = useState<string | null>(null)
+
+  if (certificates.length === 0) return null
+
+  return (
+    <div className="mt-24">
+      <Eyebrow>{t('aboutPage.certs.eyebrow')}</Eyebrow>
+      <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+        {t('aboutPage.certs.title')}
+      </h2>
+      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+        {certificates.map((cert) => (
+          <button
+            key={cert.id}
+            onClick={() => setViewImage(cert.image)}
+            className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg"
+          >
+            <img src={cert.image} alt={cert.title} className="size-full object-contain p-3" />
+            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/80 to-transparent px-3 py-2 text-xs font-medium text-background opacity-0 transition-opacity group-hover:opacity-100">
+              {cert.title}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {viewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/80 backdrop-blur-sm p-4" onClick={() => setViewImage(null)}>
+          <button className="absolute right-4 top-4 rounded-full bg-background/20 p-2 text-background hover:bg-background/30">
+            <X className="size-5" />
+          </button>
+          <img src={viewImage} alt="Certificate full view" className="max-h-[80vh] max-w-full rounded-2xl object-contain" />
+        </div>
+      )}
     </div>
   )
 }

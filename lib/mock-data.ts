@@ -185,6 +185,18 @@ export const footerLinks = [
   { label: 'Tests', href: '/testebi' },
 ]
 
+export const footerCompanyLinks: { label: string; view: string }[] = [
+  { label: 'About', view: 'about' },
+  { label: 'Contact', view: 'contact' },
+  { label: 'Tests', view: 'quiz' },
+]
+
+export const footerSessionLinks: { label: string; view: string }[] = [
+  { label: '1:1 Sessions', view: 'booking' },
+  { label: 'Group Sessions', view: 'roundtable' },
+  { label: 'Packages', view: 'packages' },
+]
+
 export const scheduleItems = [
   {
     title: 'Deep Work: 1:1 Intensive',

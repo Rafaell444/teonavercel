@@ -4,12 +4,14 @@ import { useState, useMemo } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Check, ChevronLeft, ChevronRight, Clock, ArrowRight, Sparkles } from 'lucide-react'
 import { UIButton, UICard, Eyebrow } from '@/components/ui-kit'
+import { ConsultationCTA } from '@/components/consultation-modal'
 import { usePackages, useTimeSlots } from '@/lib/hooks/useSessions'
 import type { Package } from '@/lib/hooks/useSessions'
 import { createBooking } from '@/lib/hooks/useBookings'
 import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { useT, useLocalized } from '@/lib/i18n'
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -73,6 +75,8 @@ function MiniCalendar({ availableDates, selected, onSelect }: { availableDates: 
 
 export default function PackageBooking() {
   const { user: currentUser } = useMe()
+  const t = useT()
+  const l = useLocalized()
   const { packages } = usePackages()
   const [selectedPkg, setSelectedPkg] = useState<Package | null>(null)
   const [firstSessionId, setFirstSessionId] = useState('')
@@ -143,9 +147,9 @@ export default function PackageBooking() {
     return (
       <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="packages">
         <div className="mx-auto max-w-4xl px-6 text-center">
-          <Eyebrow>Packages</Eyebrow>
-          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">No packages available</h2>
-          <p className="mt-4 text-muted-foreground">Check back soon for bundled session packages.</p>
+          <Eyebrow>{t('packages.eyebrow')}</Eyebrow>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t('packages.title')}</h2>
+          <p className="mt-4 text-muted-foreground">{t('packages.title')}</p>
         </div>
       </section>
     )
@@ -155,10 +159,10 @@ export default function PackageBooking() {
     <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="packages">
       <div className="mx-auto max-w-4xl px-6">
         <div className="text-center mb-10">
-          <Eyebrow>Big Packages</Eyebrow>
-          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">All sessions together</h2>
+          <Eyebrow>{t('packages.eyebrow')}</Eyebrow>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t('packages.title')}</h2>
           <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
-            Get the complete transformation experience with all sessions bundled together.
+            {t('packages.title')}
           </p>
         </div>
 
@@ -170,12 +174,12 @@ export default function PackageBooking() {
               <UICard key={pkg.id} className="p-6 flex flex-col transition-all duration-200 hover:border-primary/30 hover:shadow-md cursor-pointer" onClick={() => setSelectedPkg(pkg)}>
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="size-5 text-primary" />
-                  <h3 className="font-heading text-lg font-bold">{pkg.title}</h3>
+                  <h3 className="font-heading text-lg font-bold">{l(pkg.title, pkg.title_ka)}</h3>
                 </div>
-                {pkg.description && <p className="text-sm text-muted-foreground mb-4 flex-1">{pkg.description}</p>}
+                {l(pkg.description, pkg.description_ka) && <p className="text-sm text-muted-foreground mb-4 flex-1">{l(pkg.description, pkg.description_ka)}</p>}
                 <div className="space-y-2 text-sm text-muted-foreground mb-4">
-                  <p>{pkg.duration_months} months duration</p>
-                  <p>{pkg.sessions_detail?.length || 0} sessions included</p>
+                  <p>{pkg.duration_months} {t('packages.months')}</p>
+                  <p>{pkg.sessions_detail?.length || 0} {t('packages.sessions_included')}</p>
                 </div>
                 <div className="mt-auto">
                   <p className="font-heading text-2xl font-bold text-primary">${pkg.price}</p>
@@ -188,7 +192,7 @@ export default function PackageBooking() {
           <div className="max-w-lg mx-auto space-y-6">
             <UICard className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-heading text-xl font-bold">{selectedPkg.title}</h3>
+                <h3 className="font-heading text-xl font-bold">{l(selectedPkg.title, selectedPkg.title_ka)}</h3>
                 <button onClick={() => setSelectedPkg(null)} className="text-sm text-muted-foreground hover:text-foreground">Change</button>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
@@ -225,8 +229,8 @@ export default function PackageBooking() {
               )}
 
               <div className="flex gap-3 mt-4">
-                <button onClick={() => setFormat('online')} className={cn('flex-1 rounded-xl border p-3 text-center text-sm font-medium transition-all', format === 'online' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30')}>Online</button>
-                <button onClick={() => setFormat('offline')} className={cn('flex-1 rounded-xl border p-3 text-center text-sm font-medium transition-all', format === 'offline' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30')}>In-Person</button>
+                <button onClick={() => setFormat('online')} className={cn('flex-1 rounded-xl border p-3 text-center text-sm font-medium transition-all', format === 'online' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30')}>{t('booking.online')}</button>
+                <button onClick={() => setFormat('offline')} className={cn('flex-1 rounded-xl border p-3 text-center text-sm font-medium transition-all', format === 'offline' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30')}>{t('booking.offline')}</button>
               </div>
             </UICard>
 
@@ -238,10 +242,12 @@ export default function PackageBooking() {
             </UICard>
 
             <UIButton className="w-full" onClick={confirm} disabled={confirming || !date || !time || !currentUser}>
-              {confirming ? 'Booking...' : 'Confirm & Pay'} <Check className="size-4" />
+              {confirming ? t('booking.booking') : t('booking.confirm_pay')} <Check className="size-4" />
             </UIButton>
           </div>
         )}
+
+        <ConsultationCTA />
       </div>
     </section>
   )
