@@ -3,7 +3,7 @@
 import { ArrowRight } from 'lucide-react'
 import { footerCompanyLinks, footerSessionLinks } from '@/lib/mock-data'
 import { useSiteSettings } from '@/lib/hooks/useContent'
-import { useT } from '@/lib/i18n'
+import { useT, useLocalized } from '@/lib/i18n'
 
 interface SiteFooterProps {
   onNavigate?: (view: string) => void
@@ -11,6 +11,7 @@ interface SiteFooterProps {
 
 export function SiteFooter({ onNavigate }: SiteFooterProps) {
   const t = useT()
+  const l = useLocalized()
   const { settings } = useSiteSettings()
 
   const linkLabels: Record<string, string> = {
@@ -33,13 +34,13 @@ export function SiteFooter({ onNavigate }: SiteFooterProps) {
   return (
     <footer className="bg-foreground pt-20 pb-28 text-background">
       <div className="mx-auto max-w-7xl px-6">
-        <div className="grid gap-12 lg:grid-cols-[2fr_1fr_1fr_1fr]">
-          <div>
+        <div className="grid gap-10 sm:grid-cols-3 sm:gap-12 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+          <div className="sm:col-span-3 lg:col-span-1">
             <span className="font-heading text-3xl font-bold">
               {settings?.brandName}<span className="text-primary">.</span>
             </span>
             <p className="mt-4 max-w-sm text-background/60 leading-relaxed">
-              {settings?.footerTagline}
+              {l(settings?.footerTagline, settings?.footerTaglineKa)}
             </p>
           </div>
 
@@ -85,7 +86,7 @@ export function SiteFooter({ onNavigate }: SiteFooterProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-background/50">
               {t('footer.connect')}
             </p>
-            <ul className="mt-5 space-y-3 text-background/80">
+            <ul className="mt-5 space-y-3 break-words text-background/80">
               <li>{settings?.contactEmail}</li>
               <li>{settings?.contactPhone}</li>
               <li>{settings?.contactLocation}</li>
@@ -93,9 +94,11 @@ export function SiteFooter({ onNavigate }: SiteFooterProps) {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-background/10 pt-8 text-sm text-background/50 sm:flex-row">
-          <p>{t('footer.copyright')}</p>
-          <div className="flex items-center gap-6">
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-background/10 pt-8 text-sm text-background/50 lg:flex-row">
+          <p className="text-center lg:text-left">
+            © {new Date().getFullYear()} {settings?.brandName ?? 'Ascend'}. {t('footer.rights')}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <button onClick={() => handleNav('privacy')} className="hover:text-background transition-colors">
               {t('footer.privacy')}
             </button>

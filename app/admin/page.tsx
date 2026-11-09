@@ -54,7 +54,7 @@ function AdminShell() {
     return (
       <div className="min-h-screen bg-background">
         {/* Slim admin bar */}
-        <div className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-card/90 px-6 py-3 backdrop-blur-md">
+        <div className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-card/90 px-4 py-3 backdrop-blur-md sm:px-6">
           <div className="flex items-center gap-2.5">
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary">
               <Shield className="size-3.5 text-primary-foreground" />
@@ -126,9 +126,9 @@ function AdminShell() {
               autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@ascend.com"
+              placeholder="name@example.com"
               required
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground sm:text-sm placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
             />
           </div>
 
@@ -148,7 +148,7 @@ function AdminShell() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full rounded-xl border border-border bg-background py-3 pl-4 pr-11 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                className="w-full rounded-xl border border-border bg-background py-3 pl-4 pr-11 text-base text-foreground sm:text-sm placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
               />
               <button
                 type="button"

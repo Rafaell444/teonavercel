@@ -111,10 +111,10 @@ const translations: Record<string, Record<Locale, string>> = {
   'groups.confirm_seat': { ka: 'დაადასტურე ადგილი', en: 'Confirm your seat' },
   'groups.confirm_pay': { ka: 'დადასტურება და გადახდა', en: 'Confirm & Pay' },
   'groups.processing': { ka: 'მუშავდება...', en: 'Processing...' },
-  'groups.seat_confirmed': { ka: 'ადგილი დადასტურებულია', en: 'booking confirmed' },
+  'groups.seat_confirmed': { ka: 'დადასტურებულია', en: 'confirmed' },
   'groups.seats_remaining': { ka: 'ადგილი დარჩა', en: 'seats remaining' },
   'groups.click_seat': { ka: 'აირჩიეთ ცარიელი ადგილი, შემდეგ დაადასტურეთ.', en: 'Click an empty seat, then confirm and pay.' },
-  'groups.payment_note': { ka: 'გადახდა მოკირებულია — თქვენი ადგილი დაუყოვნებლივ დასტურდება.', en: 'Payment is mocked — your seat is confirmed immediately.' },
+  'groups.payment_note': { ka: 'დადასტურებისთანავე ადგილი შენია.', en: 'Your seat is confirmed immediately.' },
 
   // Packages
   'packages.eyebrow': { ka: 'პაკეტები', en: 'Packages' },
@@ -166,7 +166,7 @@ const translations: Record<string, Record<Locale, string>> = {
   // Dashboard
   'dashboard.diary.eyebrow': { ka: 'ჩანაწერები', en: 'Reflections' },
   'dashboard.diary.title': { ka: 'შენი დღიური', en: 'Your diary' },
-  'dashboard.diary.privacy': { ka: 'შენი დღიური სრულიად კონფიდენციალურია. მხოლოდ შენ ხედავ ამ ჩანაწერებს — არც ადმინი, არც სხვა ვინმე. აქ არაფერი შეიძლება გახდეს საჯარო ან გაზიარებული.', en: 'Your diary is completely private. Only you can see these entries — not the admin, not anyone else. Nothing here can be made public or shared.' },
+  'dashboard.diary.privacy': { ka: 'მხოლოდ შენ ხედავ ამ ჩანაწერებს — არც ადმინი, არც სხვა ვინმე. აქ არაფერი შეიძლება გახდეს საჯარო ან გაზიარებული.', en: 'Only you can see these entries — not the admin, not anyone else. Nothing here can be made public or shared.' },
   'dashboard.diary.privacy_bold': { ka: 'შენი დღიური სრულიად კონფიდენციალურია.', en: 'Your diary is completely private.' },
   'dashboard.diary.add': { ka: 'ჩანაწერის დამატება', en: 'Add entry' },
   'dashboard.diary.placeholder': { ka: 'რა შეამჩნიე დღეს?', en: 'What did you notice today?' },
@@ -189,6 +189,208 @@ const translations: Record<string, Record<Locale, string>> = {
   'events.eyebrow': { ka: 'მოვლენები', en: 'Upcoming Events' },
   'events.title': { ka: 'არ გამოტოვო', en: "Don't miss out" },
   'events.register': { ka: 'რეგისტრაცია', en: 'Register' },
+
+  // ── Added: shared ────────────────────────────────────────────────────────
+  'common.close': { ka: 'დახურვა', en: 'Close' },
+  'common.language': { ka: 'ენა', en: 'Language' },
+  'booking.fewer': { ka: 'ნაკლები სესია', en: 'Fewer sessions' },
+  'booking.more': { ka: 'მეტი სესია', en: 'More sessions' },
+  'booking.step_of': { ka: 'ნაბიჯი {current} / {total}', en: 'Step {current} of {total}' },
+  'dash.sections': { ka: 'პანელის სექციები', en: 'Dashboard sections' },
+  'common.tbilisi': { ka: 'თბილისი', en: 'Tbilisi' },
+  'format.in_person': { ka: 'პირისპირ', en: 'In-person' },
+
+  // Navbar
+  'nav.individual': { ka: 'ინდივიდუალური სესიები', en: '1:1 Sessions' },
+  'nav.menu': { ka: 'მენიუ', en: 'Menu' },
+  'nav.role.admin': { ka: 'ადმინისტრატორი', en: 'Administrator' },
+  'nav.tier': { ka: 'დონე: {tier}', en: '{tier} tier' },
+
+  // Home
+  'hero.image_alt': { ka: 'კოუჩი სცენაზე, დრამატულ განათებაში', en: 'Coach on stage in dramatic light' },
+  'about.image_alt': { ka: 'მთავარი კოუჩის პორტრეტი', en: 'Portrait of the lead coach' },
+  'events.upcoming': { ka: 'მალე', en: 'Upcoming' },
+  'events.heading': { ka: 'ცოცხალი სესიები და სემინარები', en: 'Live sessions & seminars' },
+  'events.reserve': { ka: 'ადგილის დაჯავშნა', en: 'Reserve seat' },
+  'events.prev': { ka: 'წინა ღონისძიებები', en: 'Previous events' },
+  'events.next': { ka: 'შემდეგი ღონისძიებები', en: 'Next events' },
+  'testimonials.label': { ka: 'ტრანსფორმაციები', en: 'Transformations' },
+  'testimonials.prev': { ka: 'წინა შეფასება', en: 'Previous testimonial' },
+  'testimonials.next': { ka: 'შემდეგი შეფასება', en: 'Next testimonial' },
+  'testimonials.item': { ka: 'შეფასება {n}', en: 'Testimonial {n}' },
+  'footer.rights': { ka: 'ყველა უფლება დაცულია.', en: 'All rights reserved.' },
+
+  // Contact
+  'contact.phone': { ka: 'ტელეფონი', en: 'Phone' },
+  'contact.location': { ka: 'მდებარეობა', en: 'Location' },
+
+  // Auth
+  'auth.title.register': { ka: 'დაიწყე შენი გზა', en: 'Begin your ascent' },
+  'auth.title.login': { ka: 'კეთილი იყოს შენი დაბრუნება', en: 'Welcome back' },
+  'auth.subtitle.register': { ka: 'შექმენი ანგარიში, რომ თვალი ადევნო შენს ზრდას და დაჯავშნო სესიები.', en: 'Create an account to track your growth and book sessions.' },
+  'auth.subtitle.login': { ka: 'შედი, რომ ნახო შენი პანელი და განრიგი.', en: 'Log in to access your dashboard and schedule.' },
+  'auth.or': { ka: 'ან', en: 'or' },
+  'auth.name.placeholder': { ka: 'სახელი და გვარი', en: 'Your full name' },
+  'auth.wait': { ka: 'გთხოვ, მოიცადე…', en: 'Please wait…' },
+  'auth.create': { ka: 'ანგარიშის შექმნა', en: 'Create account' },
+  'auth.have_account': { ka: 'უკვე გაქვს ანგარიში?', en: 'Already have an account?' },
+  'auth.no_account': { ka: 'არ გაქვს ანგარიში?', en: "Don't have an account?" },
+
+  // Booking
+  'booking.eyebrow': { ka: 'სესიის დაჯავშნა', en: 'Book a session' },
+  'booking.title': { ka: 'დაიწყე შენი გზა', en: 'Start your journey' },
+  'booking.per_session': { ka: '/სესია', en: '/session' },
+  'booking.total': { ka: 'სულ', en: 'Total' },
+  'booking.validity': { ka: 'მოქმედების ვადა', en: 'Validity period' },
+  'booking.validity.complete': { ka: '{n} თვე ყველა სესიის გასავლელად', en: '{n} months to complete all sessions' },
+  'booking.validity.note': { ka: 'ამ ვადის შემდეგ სესიები იწურება — გამოუყენებელი სესიების თანხა არ ბრუნდება.', en: 'Sessions expire after this period — no refunds for unused sessions.' },
+  'booking.no_times': { ka: 'თავისუფალი დრო ჯერ არ არის. გთხოვ, მოგვიანებით შეამოწმე.', en: 'No available times yet. Please check back soon.' },
+  'booking.no_slots_date': { ka: 'ამ თარიღზე თავისუფალი დრო არ არის.', en: 'No available slots for this date.' },
+  'booking.online.desc': { ka: 'Google Meet-ის ბმულს დაჯავშნის შემდეგ მიიღებ', en: 'A Google Meet link will be generated' },
+  'booking.offline.desc': { ka: 'შეხვედრა თბილისში, მისამართითა და მითითებებით', en: 'Tbilisi location with directions' },
+  'booking.voucher.skip': { ka: 'თუ კოდი არ გაქვს, შეგიძლია ეს ნაბიჯი გამოტოვო.', en: "You can skip this step if you don't have a code." },
+  'booking.voucher.applied': { ka: 'კოდი გააქტიურდა! ფასდაკლება: {value}', en: 'Code applied! {value} off' },
+  'booking.first_date': { ka: 'პირველი სესიის თარიღი', en: 'First session date' },
+  'booking.time': { ka: 'დრო', en: 'Time' },
+  'booking.date': { ka: 'თარიღი', en: 'Date' },
+  'booking.valid_for': { ka: 'მოქმედებს', en: 'Valid for' },
+  'booking.months_n': { ka: '{n} თვე', en: '{n} months' },
+  'booking.confirm.note': { ka: 'პირველი სესიის შემდეგ ყოველი მომდევნო სესიის თარიღსა და დროს თავად აირჩევ. მოქმედების ვადის გასვლის შემდეგ გამოუყენებელი სესიების თანხა არ ბრუნდება.', en: "After your first session, you'll choose date and time for each subsequent session. Unused sessions are not refunded after the validity period." },
+  'booking.done.title': { ka: 'ჯავშანი მიღებულია!', en: "You're booked!" },
+  'booking.done.body': { ka: 'ეს თარიღი და დრო შენი პირველი სესიისთვისაა. ყოველი სესიის შემდეგ შეძლებ მომდევნოს თარიღისა და დროის არჩევას.', en: "This date and time is for your first session. After each session, you'll be able to choose the date and time for your next one." },
+  'booking.done.note': { ka: 'სესიებს მოქმედების ვადა აქვს — არ დაგავიწყდეს მათი დროულად დაგეგმვა!', en: 'Your sessions expire based on your package — make sure to schedule them in time!' },
+  'booking.done.again': { ka: 'კიდევ ერთის დაჯავშნა', en: 'Book another' },
+  'booking.login_required': { ka: 'ჯავშნის დასადასტურებლად გთხოვ, ჯერ შედი ანგარიშზე.', en: 'Please log in to confirm your booking.' },
+  'booking.prev_month': { ka: 'წინა თვე', en: 'Previous month' },
+  'booking.next_month': { ka: 'შემდეგი თვე', en: 'Next month' },
+
+  // Group sessions
+  'groups.login_required': { ka: 'ადგილის დასაჯავშნად გთხოვ, შედი ანგარიშზე.', en: 'Please log in to reserve a seat.' },
+  'groups.default_title': { ka: 'ჯგუფური სესია', en: 'Group session' },
+  'groups.online_live': { ka: 'ონლაინ · პირდაპირი', en: 'Online · Live' },
+  'groups.confirmed_title': { ka: 'ადგილი დადასტურებულია!', en: 'Seat confirmed!' },
+  'groups.seat_n': { ka: 'ადგილი #{n}', en: 'Seat #{n}' },
+  'groups.total_n': { ka: 'სულ: {amount}', en: 'Total: {amount}' },
+  'groups.meet_open': { ka: 'Google Meet-ის ბმულის გახსნა', en: 'Open Google Meet link' },
+  'groups.in_dashboard': { ka: 'ეს ჯავშანი შენს პანელშიც გამოჩნდება.', en: 'This booking also appears in your dashboard.' },
+  'groups.no_schedule': { ka: 'ამ ჯგუფური სესიისთვის თარიღები ჯერ არ არის დანიშნული.', en: 'No scheduled dates for this group session yet.' },
+  'groups.no_schedule_sub': { ka: 'გთხოვ, მოგვიანებით შეამოწმე.', en: 'Please check back soon.' },
+  'groups.per_seat': { ka: '/ადგილი', en: '/seat' },
+  'groups.maps': { ka: 'Google Maps-ში გახსნა', en: 'Open in Google Maps' },
+  'groups.cancel': { ka: 'გაუქმება', en: 'Cancel' },
+  'groups.pick_seat_n': { ka: 'ადგილი #{n}-ის არჩევა', en: 'Choose seat #{n}' },
+
+  // Packages
+  'packages.subtitle': { ka: 'რამდენიმე სესია ერთ პაკეტში — თანმიმდევრული გზა რეალური ცვლილებისკენ.', en: 'Several sessions in one bundle — a structured path to real change.' },
+  'packages.empty': { ka: 'პაკეტები ამჟამად არ არის. გთხოვ, მოგვიანებით შეამოწმე.', en: 'No packages are available right now. Please check back soon.' },
+  'packages.done.title': { ka: 'პაკეტი დაჯავშნილია!', en: 'Package booked!' },
+  'packages.done.body': { ka: 'შენი პირველი სესია დაგეგმილია. ყოველი სესიის შემდეგ მომდევნოს თარიღს, დროსა და ფორმატს (პირისპირ ან ონლაინ) შენი პანელიდან აირჩევ.', en: "Your first session is scheduled. After each session, you'll choose the date, time, and format (live or online) for your next one from your dashboard." },
+  'packages.done.duration': { ka: 'პაკეტის ხანგრძლივობა: {n} თვე', en: 'Package duration: {n} months' },
+  'packages.back': { ka: 'პაკეტებზე დაბრუნება', en: 'Back to packages' },
+  'packages.select': { ka: 'არჩევა', en: 'Select' },
+  'packages.change': { ka: 'შეცვლა', en: 'Change' },
+  'packages.first_session': { ka: 'აირჩიე შენი პირველი სესიის თარიღი და დრო. ყოველი სესიის შემდეგ მომდევნოს თარიღს შენი პანელიდან აირჩევ.', en: "Choose the date and time for your first session. After each session, you'll select the date for the next one from your dashboard." },
+  'packages.start_with': { ka: 'დაიწყე აქედან', en: 'Start with' },
+  'packages.package': { ka: 'პაკეტი', en: 'Package' },
+  'packages.duration': { ka: 'ხანგრძლივობა', en: 'Duration' },
+
+  // Tests
+  'tests.eyebrow': { ka: 'თვითშეფასება', en: 'Self-assessment' },
+  'tests.title': { ka: 'ტესტები და შეფასებები', en: 'Tests & assessments' },
+  'tests.intro': { ka: 'აირჩიე ტესტი. თითოეული მათგანი რამდენიმე მოკლე კითხვაა, რომელიც დაგეხმარება გაიგო, სად ხარ ახლა და რომელი გზა გერგება ყველაზე მეტად.', en: 'Choose a test below. Each one is a short series of questions that helps map where you are and what path fits you best.' },
+  'tests.questions_n': { ka: '{n} კითხვა', en: '{n} questions' },
+  'tests.minutes_n': { ka: '~{n} წთ', en: '~{n} min' },
+  'tests.start': { ka: 'ტესტის დაწყება', en: 'Start test' },
+  'tests.empty': { ka: 'ტესტები ამჟამად არ არის. გთხოვ, მოგვიანებით შეამოწმე.', en: 'No tests are available right now. Check back soon.' },
+  'tests.all': { ka: 'ყველა ტესტი', en: 'All tests' },
+  'tests.results.title': { ka: 'შენი შედეგები მზადაა', en: 'Your results are in' },
+  'tests.results.body': { ka: 'შენი პასუხების მიხედვით, აი პროგრამა, რომელიც ახლა ყველაზე მეტად გერგება.', en: 'Based on your answers, here is the programme that fits you best right now.' },
+  'tests.results.recommended': { ka: 'შენთვის რეკომენდებული', en: 'Recommended for you' },
+  'tests.results.thanks': { ka: 'მადლობა ტესტის გავლისთვის. ჩვენი გუნდი დაგიკავშირდება პერსონალური რეკომენდაციით.', en: 'Thank you for completing the test. Our team will be in touch with a personalised recommendation.' },
+  'tests.your_answer': { ka: 'შენი პასუხი:', en: 'Your answer:' },
+  'tests.more': { ka: 'სხვა ტესტების ნახვა', en: 'Explore more tests' },
+  'tests.retake': { ka: 'თავიდან გავლა', en: 'Retake' },
+  'tests.progress': { ka: 'კითხვა {current} / {total}', en: 'Question {current} of {total}' },
+  'tests.next': { ka: 'შემდეგი', en: 'Next' },
+  'tests.see_results': { ka: 'შედეგების ნახვა', en: 'See results' },
+
+  // Statuses (bookings and individual sessions)
+  'status.Confirmed': { ka: 'დადასტურებული', en: 'Confirmed' },
+  'status.Pending': { ka: 'მოლოდინში', en: 'Pending' },
+  'status.Cancelled': { ka: 'გაუქმებული', en: 'Cancelled' },
+  'status.Expired': { ka: 'ვადაგასული', en: 'Expired' },
+  'status.scheduled': { ka: 'დაგეგმილი', en: 'Scheduled' },
+  'status.completed': { ka: 'დასრულებული', en: 'Completed' },
+  'status.missed': { ka: 'გაცდენილი', en: 'Missed' },
+  'status.cancelled': { ka: 'გაუქმებული', en: 'Cancelled' },
+
+  // Dashboard
+  'dash.tab.overview': { ka: 'მიმოხილვა', en: 'Overview' },
+  'dash.tab.growth': { ka: 'ზრდა', en: 'Growth' },
+  'dash.tab.schedule': { ka: 'ჩემი განრიგი', en: 'My Schedule' },
+  'dash.tab.vault': { ka: 'პირადი საცავი', en: 'Private Vault' },
+  'dash.tab.tests': { ka: 'ჩემი ტესტები', en: 'My Tests' },
+  'dash.tab.diary': { ka: 'დღიური', en: 'Diary' },
+  'dash.tab.book': { ka: 'სესიის დაჯავშნა', en: 'Book a Session' },
+  'dash.tab.profile': { ka: 'პროფილი', en: 'Profile' },
+  'dash.vault_card.title': { ka: 'გახსენი საცავი', en: 'Unlock the Vault' },
+  'dash.vault_card.body': { ka: 'ექსკლუზიური ჩანაწერები და რესურსები Master დონისთვის.', en: 'Exclusive recordings & resources for Master tier.' },
+  'dash.welcome': { ka: 'გამარჯობა, {name}', en: 'Welcome back, {name}' },
+  'dash.open_menu': { ka: 'მენიუს გახსნა', en: 'Open menu' },
+  'dash.close_menu': { ka: 'მენიუს დახურვა', en: 'Close menu' },
+  'dash.growth.eyebrow': { ka: 'შენი ზრდა', en: 'Your Growth' },
+  'dash.growth.to_next': { ka: '{xp} XP {tier} დონემდე', en: '{xp} XP to {tier}' },
+  'dash.growth.max': { ka: 'მაქსიმალური დონე მიღწეულია', en: 'Max tier reached' },
+  'dash.stat.xp': { ka: 'მიღებული XP', en: 'XP earned' },
+  'dash.stat.vouchers': { ka: 'ვაუჩერები', en: 'Vouchers' },
+  'dash.stat.vouchers_n': { ka: '{n} აქტიური', en: '{n} active' },
+  'dash.stat.sessions': { ka: 'სესიები', en: 'Sessions' },
+  'dash.stat.sessions_n': { ka: '{n} დაჯავშნილი', en: '{n} booked' },
+  'dash.stat.tier': { ka: 'ამჟამინდელი დონე', en: 'Current tier' },
+  'dash.next.eyebrow': { ka: 'შემდეგი სესია', en: 'Next Session' },
+  'dash.next.none': { ka: 'სესიები ჯერ არ გაქვს', en: 'No sessions yet' },
+  'dash.next.book_first': { ka: 'დაჯავშნე პირველი სესია', en: 'Book your first session' },
+  'dash.next.online': { ka: 'ონლაინ · Google Meet', en: 'Online · Google Meet' },
+  'dash.next.book_another': { ka: 'კიდევ ერთი სესიის დაჯავშნა', en: 'Book another session' },
+  'dash.diary.recent': { ka: 'ბოლო ჩანაწერები', en: 'Recent Diary' },
+  'dash.diary.view_all': { ka: 'ყველას ნახვა', en: 'View all' },
+  'dash.diary.new_title': { ka: 'ახალი ჩანაწერი', en: 'New reflection' },
+  'dash.diary.mood_open': { ka: 'ღია', en: 'Open' },
+  'dash.journey.eyebrow': { ka: 'შენი გზა', en: 'Your Journey' },
+  'dash.journey.title': { ka: 'ზრდა და ეტაპები', en: 'Growth & milestones' },
+  'dash.milestones': { ka: 'ეტაპები', en: 'Milestones' },
+  'dash.milestones.count': { ka: '{done}/{total} შესრულებული', en: '{done}/{total} complete' },
+  'dash.schedule.eyebrow': { ka: 'მომავალი', en: 'Upcoming' },
+  'dash.schedule.title': { ka: 'ჩემი სესიები', en: 'My sessions' },
+  'dash.schedule.new': { ka: 'ახალი ჯავშანი', en: 'New booking' },
+  'dash.schedule.empty': { ka: 'ჯავშნები ჯერ არ გაქვს. დაჯავშნე პირველი სესია და აქ გამოჩნდება.', en: 'No bookings yet. Book your first session to see it here.' },
+  'dash.schedule.expired': { ka: 'ამ ჯავშნის ვადა ამოიწურა. სესიების დაგეგმვა აღარ შეიძლება.', en: 'This booking has expired. Sessions can no longer be scheduled.' },
+  'dash.schedule.expires': { ka: 'ვადა იწურება: {date}', en: 'Expires: {date}' },
+  'dash.schedule.used': { ka: '{used}/{total} სესია გამოყენებულია', en: '{used}/{total} sessions used' },
+  'dash.schedule.join': { ka: 'Google Meet-ზე შესვლა', en: 'Join Google Meet' },
+  'dash.schedule.next_hint': { ka: 'შემდეგი სესია ჯერ არ არის დაგეგმილი', en: 'Next session not scheduled yet' },
+  'dash.schedule.sessions': { ka: 'სესიები', en: 'Sessions' },
+  'dash.schedule.not_scheduled': { ka: 'არ არის დაგეგმილი', en: 'Not scheduled' },
+  'dash.schedule.meet': { ka: 'Meet-ის ბმული', en: 'Meet link' },
+  'dash.vault.eyebrow': { ka: 'მხოლოდ წევრებისთვის', en: 'Members Only' },
+  'dash.vault.title': { ka: 'პირადი საცავი', en: 'Private vault' },
+  'dash.vault.assigned': { ka: 'შენთვის მინიჭებული', en: 'Assigned to you' },
+  'dash.vault.assigned_empty': { ka: 'შენს კოუჩს პირადი მასალა ჯერ არ აუტვირთავს. შენთვის მინიჭებული მასალები აქ გამოჩნდება.', en: "Your coach hasn't uploaded anything personal yet. Items assigned to you will appear here." },
+  'dash.vault.shared': { ka: 'საერთო ბიბლიოთეკა', en: 'Shared library' },
+  'dash.vault.open': { ka: 'გახსნა', en: 'Open' },
+  'dash.by': { ka: 'ავტორი: {name}', en: 'by {name}' },
+  'dash.tests.eyebrow': { ka: 'მინიჭებული და ღია', en: 'Assigned & open' },
+  'dash.tests.title': { ka: 'ჩემი ტესტები', en: 'My tests' },
+  'dash.tests.assigned': { ka: 'კოუჩის მიერ მინიჭებული', en: 'Assigned by your coach' },
+  'dash.tests.assigned_empty': { ka: 'ტესტები ჯერ არ მოგნიჭებია.', en: 'No tests have been assigned to you yet.' },
+  'dash.tests.assigned_by': { ka: 'მოგანიჭა: {name}', en: 'Assigned by {name}' },
+  'dash.tests.open': { ka: 'ღია ტესტები', en: 'Open assessments' },
+  'dash.profile.eyebrow': { ka: 'ანგარიში', en: 'Account' },
+  'dash.profile.title': { ka: 'შენი პროფილი', en: 'Your profile' },
+  'dash.profile.tier_xp': { ka: '{tier} დონე · {xp} XP', en: '{tier} tier · {xp} XP' },
+  'dash.profile.saved': { ka: 'შენახულია!', en: 'Saved!' },
+  'dash.profile.save': { ka: 'ცვლილებების შენახვა', en: 'Save changes' },
+  'dash.profile.error': { ka: 'ცვლილებების შენახვა ვერ მოხერხდა. გთხოვ, სცადე თავიდან.', en: 'Failed to save changes. Please try again.' },
 }
 
 interface I18nContextType {
@@ -213,6 +415,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
+
   const changeLocale = useCallback((l: Locale) => {
     setLocale(l)
     localStorage.setItem('locale', l)
@@ -227,6 +433,16 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       {children}
     </I18nContext.Provider>
   )
+}
+
+/** Fills {placeholders} in a translated string: fmt('Seat #{n}', { n: 3 }). */
+export function fmt(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key) => (key in vars ? String(vars[key]) : match))
+}
+
+/** Looks a key up in a specific language, regardless of the visitor's current one. */
+export function translate(key: string, locale: Locale): string {
+  return translations[key]?.[locale] ?? key
 }
 
 export function useI18n() {

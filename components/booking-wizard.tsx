@@ -21,7 +21,8 @@ import { validateVoucher } from '@/lib/hooks/useVouchers'
 import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { useT } from '@/lib/i18n'
+import { useT, useLocale, useLocalized, fmt } from '@/lib/i18n'
+import { WEEKDAY_LABELS, formatDate, formatTime, monthYearLabel } from '@/lib/format'
 
 const STEP_KEYS = [
   'booking.step.session',
@@ -32,17 +33,16 @@ const STEP_KEYS = [
   'booking.step.voucher',
   'booking.step.confirm',
 ] as const
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+// How long a block of sessions stays valid, in months, by number of sessions
+const VALIDITY_MONTHS: Record<number, string> = { 3: '1.5', 4: '2', 5: '3', 6: '3', 7: '5' }
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
 }
 
 function Calendar({ availableDates, selected, onSelect }: { availableDates: string[], selected: Date | null, onSelect: (d: Date) => void }) {
+  const t = useT()
+  const locale = useLocale()
   const today = startOfDay(new Date())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -65,16 +65,16 @@ function Calendar({ availableDates, selected, onSelect }: { availableDates: stri
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="flex items-center justify-between mb-3">
-        <button onClick={() => { if (canPrev) { if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1) } else setViewMonth(viewMonth - 1) } }} disabled={!canPrev} className="p-1.5 rounded-lg hover:bg-secondary disabled:opacity-30">
+        <button onClick={() => { if (canPrev) { if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1) } else setViewMonth(viewMonth - 1) } }} disabled={!canPrev} aria-label={t('booking.prev_month')} className="flex size-10 items-center justify-center rounded-lg hover:bg-secondary disabled:opacity-30">
           <ChevronLeft className="size-4" />
         </button>
-        <span className="text-sm font-semibold">{MONTH_NAMES[viewMonth]} {viewYear}</span>
-        <button onClick={() => { if (canNext) { if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1) } else setViewMonth(viewMonth + 1) } }} disabled={!canNext} className="p-1.5 rounded-lg hover:bg-secondary disabled:opacity-30">
+        <span className="text-sm font-semibold">{monthYearLabel(viewYear, viewMonth, locale)}</span>
+        <button onClick={() => { if (canNext) { if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1) } else setViewMonth(viewMonth + 1) } }} disabled={!canNext} aria-label={t('booking.next_month')} className="flex size-10 items-center justify-center rounded-lg hover:bg-secondary disabled:opacity-30">
           <ChevronRight className="size-4" />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 mb-1">
-        {WEEKDAYS.map((w) => <div key={w} className="text-center text-[10px] font-semibold text-muted-foreground py-1">{w}</div>)}
+        {WEEKDAY_LABELS[locale].map((w) => <div key={w} className="text-center text-[10px] font-semibold text-muted-foreground py-1">{w}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-1">
         {cells.map((cell, i) => {
@@ -90,9 +90,11 @@ function Calendar({ availableDates, selected, onSelect }: { availableDates: stri
             <button
               key={dateStr}
               disabled={disabled}
+              aria-label={formatDate(cell, locale, { weekday: true })}
+              aria-pressed={!!isSelected}
               onClick={() => onSelect(cell)}
               className={cn(
-                'aspect-square rounded-lg text-xs font-medium transition-all duration-150 relative',
+                'aspect-square rounded-lg text-sm font-medium transition-all duration-150 relative',
                 isSelected ? 'bg-primary text-primary-foreground shadow-sm' : '',
                 !isSelected && isAvailable && !isPast ? 'hover:bg-primary/10 text-foreground' : '',
                 disabled ? 'text-muted-foreground/30 cursor-not-allowed' : 'cursor-pointer',
@@ -111,6 +113,8 @@ function Calendar({ availableDates, selected, onSelect }: { availableDates: stri
 
 export default function BookingWizard() {
   const t = useT()
+  const locale = useLocale()
+  const l = useLocalized()
   const { user: currentUser } = useMe()
   const { sessions } = useSessions('individual')
   const [step, setStep] = useState(0)
@@ -170,7 +174,7 @@ export default function BookingWizard() {
       const result = await validateVoucher(voucherCode, activeSessionId, basePrice)
       setVoucherDiscount(Number(result.computed_discount))
       setVoucherValid(true)
-      setVoucherMsg(`Code applied! ${result.discount_type === 'percentage' ? `${result.discount_value}% off` : `$${result.discount_value} off`}`)
+      setVoucherMsg(fmt(t('booking.voucher.applied'), { value: result.discount_type === 'percentage' ? `${result.discount_value}%` : `$${result.discount_value}` }))
     } catch (e) {
       setVoucherValid(false)
       setVoucherDiscount(0)
@@ -189,6 +193,8 @@ export default function BookingWizard() {
         date: dateStr,
         time,
         format,
+        // The language picked in step 5. It was collected but never sent before.
+        session_language: sessionLang,
         num_sessions: numSessions,
         voucher_code: voucherValid ? voucherCode : undefined,
         discount_amount: voucherDiscount,
@@ -207,30 +213,34 @@ export default function BookingWizard() {
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-6 flex size-20 items-center justify-center rounded-full bg-primary/10">
           <Check className="size-9 text-primary" />
         </motion.div>
-        <h2 className="font-heading text-3xl font-bold">You&apos;re booked!</h2>
+        <h2 className="font-heading text-3xl font-bold">{t('booking.done.title')}</h2>
         <p className="mt-3 max-w-md text-muted-foreground">
-          This date and time is for your <strong>first session</strong>. After each session, you&apos;ll be able to choose the date and time for your next one.
+          {t('booking.done.body')}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Your sessions expire based on your package — make sure to schedule them in time!
+          {t('booking.done.note')}
         </p>
         <UIButton className="mt-8" onClick={() => { setDone(false); setStep(0); setDate(null); setTime(''); setVoucherCode(''); setVoucherDiscount(0); setVoucherValid(null) }}>
-          Book another
+          {t('booking.done.again')}
         </UIButton>
       </div>
     )
   }
 
   return (
-    <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="book">
-      <div className="mx-auto max-w-3xl px-6">
+    <section className="overflow-x-clip bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="book">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <div className="mb-10 text-center">
-          <Eyebrow>Book a session</Eyebrow>
-          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">Start your journey</h2>
+          <Eyebrow>{t('booking.eyebrow')}</Eyebrow>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t('booking.title')}</h2>
         </div>
 
         {/* Progress */}
-        <div className="mb-10 flex items-center justify-center gap-1">
+        <div
+          className="mb-10 flex items-center justify-center gap-1"
+          role="img"
+          aria-label={`${fmt(t('booking.step_of'), { current: step + 1, total: steps.length })}: ${steps[step]}`}
+        >
           {steps.map((s, i) => (
             <div key={s} className={cn('h-1.5 rounded-full transition-all duration-300', i <= step ? 'w-8 bg-primary' : 'w-4 bg-border')} />
           ))}
@@ -249,11 +259,12 @@ export default function BookingWizard() {
                   <UICard
                     key={s.id}
                     onClick={() => setSessionId(s.id)}
+                    aria-pressed={activeSessionId === s.id}
                     className={cn('cursor-pointer p-5 transition-all duration-200 hover:border-primary/30 hover:shadow-sm', activeSessionId === s.id && 'border-primary ring-2 ring-primary/20')}
                   >
-                    <h3 className="font-heading text-lg font-bold">{s.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{s.description || s.format}</p>
-                    <p className="mt-3 text-2xl font-bold text-primary">${s.price}<span className="text-sm font-normal text-muted-foreground">/session</span></p>
+                    <h3 className="font-heading text-lg font-bold">{l(s.title, s.title_ka)}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{l(s.description, s.description_ka) || (s.format === 'offline' ? t('booking.offline') : t('booking.online'))}</p>
+                    <p className="mt-3 text-2xl font-bold text-primary">${s.price}<span className="text-sm font-normal text-muted-foreground">{t('booking.per_session')}</span></p>
                   </UICard>
                 ))}
                 </div>
@@ -265,24 +276,20 @@ export default function BookingWizard() {
               <div className="text-center space-y-6">
                 <h3 className="text-lg font-semibold">{t('booking.how_many')}</h3>
                 <div className="flex items-center justify-center gap-6">
-                  <button onClick={() => setNumSessions(Math.max(3, numSessions - 1))} className="flex size-12 items-center justify-center rounded-full border border-border text-lg font-bold hover:bg-secondary">-</button>
+                  <button onClick={() => setNumSessions(Math.max(3, numSessions - 1))} aria-label={t('booking.fewer')} className="flex size-12 items-center justify-center rounded-full border border-border text-lg font-bold hover:bg-secondary">-</button>
                   <span className="font-heading text-5xl font-bold text-primary">{numSessions}</span>
-                  <button onClick={() => setNumSessions(Math.min(7, numSessions + 1))} className="flex size-12 items-center justify-center rounded-full border border-border text-lg font-bold hover:bg-secondary">+</button>
+                  <button onClick={() => setNumSessions(Math.min(7, numSessions + 1))} aria-label={t('booking.more')} className="flex size-12 items-center justify-center rounded-full border border-border text-lg font-bold hover:bg-secondary">+</button>
                 </div>
-                <input type="range" min={3} max={7} value={numSessions} onChange={(e) => setNumSessions(Number(e.target.value))} className="w-full max-w-xs accent-primary" />
+                <input type="range" aria-label={t('booking.step.number')} min={3} max={7} value={numSessions} onChange={(e) => setNumSessions(Number(e.target.value))} className="w-full max-w-xs accent-primary" />
                 <p className="text-sm text-muted-foreground">
-                  Total: <strong>${selectedSession ? selectedSession.price * numSessions : 0}</strong>
+                  {t('booking.total')}: <strong>${selectedSession ? selectedSession.price * numSessions : 0}</strong>
                 </p>
                 <div className="mx-auto max-w-xs rounded-xl border border-border bg-secondary/50 p-4 text-left">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground mb-2">Validity period</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground mb-2">{t('booking.validity')}</p>
                   <p className="text-sm font-medium">
-                    {numSessions === 3 && '1.5 months to complete all sessions'}
-                    {numSessions === 4 && '2 months to complete all sessions'}
-                    {numSessions === 5 && '3 months to complete all sessions'}
-                    {numSessions === 6 && '3 months to complete all sessions'}
-                    {numSessions === 7 && '5 months to complete all sessions'}
+                    {fmt(t('booking.validity.complete'), { n: VALIDITY_MONTHS[numSessions] ?? '' })}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">Sessions expire after this period — no refunds for unused sessions.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('booking.validity.note')}</p>
                 </div>
               </div>
             )}
@@ -299,7 +306,7 @@ export default function BookingWizard() {
                         key={slot.id}
                         onClick={() => { setTime(slot.start_time); setSelectedSlotId(slot.id) }}
                         className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium border transition-all duration-150',
+                          'inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium border transition-all duration-150',
                           time === slot.start_time ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/50',
                         )}
                       >
@@ -309,10 +316,10 @@ export default function BookingWizard() {
                   </div>
                 )}
                 {availableDates.length === 0 && (
-                  <p className="text-center text-sm text-muted-foreground">No available times yet — the administrator needs to add availability for this session.</p>
+                  <p className="text-center text-sm text-muted-foreground">{t('booking.no_times')}</p>
                 )}
                 {date && timesForDate.length === 0 && availableDates.length > 0 && (
-                  <p className="text-center text-sm text-muted-foreground">No available slots for this date.</p>
+                  <p className="text-center text-sm text-muted-foreground">{t('booking.no_slots_date')}</p>
                 )}
               </div>
             )}
@@ -324,19 +331,21 @@ export default function BookingWizard() {
                 <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
                 <UICard
                   onClick={() => setFormat('online')}
+                  aria-pressed={format === 'online'}
                   className={cn('cursor-pointer p-6 text-center transition-all', format === 'online' && 'border-primary ring-2 ring-primary/20')}
                 >
                   <Monitor className="mx-auto size-8 text-primary mb-3" />
                   <h3 className="font-bold">{t('booking.online')}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Google Meet link will be generated</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('booking.online.desc')}</p>
                 </UICard>
                 <UICard
                   onClick={() => setFormat('offline')}
+                  aria-pressed={format === 'offline'}
                   className={cn('cursor-pointer p-6 text-center transition-all', format === 'offline' && 'border-primary ring-2 ring-primary/20')}
                 >
                   <Users className="mx-auto size-8 text-primary mb-3" />
                   <h3 className="font-bold">{t('booking.offline')}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Tbilisi location with directions</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('booking.offline.desc')}</p>
                 </UICard>
                 </div>
               </div>
@@ -349,6 +358,7 @@ export default function BookingWizard() {
                 <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
                   <UICard
                     onClick={() => setSessionLang('ka')}
+                    aria-pressed={sessionLang === 'ka'}
                     className={cn('cursor-pointer p-6 text-center transition-all', sessionLang === 'ka' && 'border-primary ring-2 ring-primary/20')}
                   >
                     <span className="mx-auto mb-3 block text-3xl">🇬🇪</span>
@@ -356,6 +366,7 @@ export default function BookingWizard() {
                   </UICard>
                   <UICard
                     onClick={() => setSessionLang('en')}
+                    aria-pressed={sessionLang === 'en'}
                     className={cn('cursor-pointer p-6 text-center transition-all', sessionLang === 'en' && 'border-primary ring-2 ring-primary/20')}
                   >
                     <span className="mx-auto mb-3 block text-3xl">🇬🇧</span>
@@ -369,71 +380,74 @@ export default function BookingWizard() {
             {step === 5 && (
               <div className="max-w-md mx-auto space-y-4">
                 <h3 className="text-center text-lg font-semibold mb-2">{t('booking.voucher_code')}</h3>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <div className="relative flex-1">
                     <Tag className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <input
                       value={voucherCode}
+                      aria-label={t('booking.voucher_code')}
                       onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); setVoucherValid(null); setVoucherMsg('') }}
                       placeholder={t('booking.voucher_code')}
-                      className="h-12 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm font-mono uppercase placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      className="h-12 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-base font-mono uppercase sm:text-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     />
                   </div>
-                  <UIButton onClick={handleValidateVoucher} disabled={!voucherCode.trim()}>{t('booking.apply')}</UIButton>
+                  <UIButton onClick={handleValidateVoucher} disabled={!voucherCode.trim()} className="h-12 shrink-0">{t('booking.apply')}</UIButton>
                 </div>
                 {voucherMsg && (
-                  <p className={cn('text-sm', voucherValid ? 'text-emerald-600' : 'text-destructive')}>{voucherMsg}</p>
+                  <p className={cn('text-sm', voucherValid ? 'text-emerald-700' : 'text-destructive')}>{voucherMsg}</p>
                 )}
-                {!voucherCode && <p className="text-center text-xs text-muted-foreground">You can skip this step if you don&apos;t have a code.</p>}
+                {!voucherCode && <p className="text-center text-xs text-muted-foreground">{t('booking.voucher.skip')}</p>}
               </div>
             )}
 
             {/* Step 6: Confirm */}
             {step === 6 && selectedSession && (
-              <UICard className="p-6 space-y-4 max-w-md mx-auto">
+              <UICard className="mx-auto max-w-md space-y-4 p-5 sm:p-6">
                 <h3 className="font-heading text-xl font-bold text-center">{t('booking.confirm_title')}</h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">{t('booking.step.session')}</span><span className="font-medium">{selectedSession.title}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{t('booking.sessions_count')}</span><span className="font-medium">{numSessions}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">First session date</span><span className="font-medium">{date?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Time</span><span className="font-medium">{time}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{t('booking.step.format')}</span><span className="font-medium">{format === 'online' ? t('booking.online') : t('booking.offline')}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{t('booking.language')}</span><span className="font-medium">{sessionLang === 'ka' ? t('booking.lang.ka') : t('booking.lang.en')}</span></div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Valid for</span>
+                  <div className="flex justify-between gap-4"><span className="shrink-0 text-muted-foreground">{t('booking.step.session')}</span><span className="text-right font-medium">{l(selectedSession.title, selectedSession.title_ka)}</span></div>
+                  <div className="flex justify-between gap-4"><span className="shrink-0 text-muted-foreground">{t('booking.step.number')}</span><span className="font-medium">{numSessions}</span></div>
+                  <div className="flex justify-between gap-4"><span className="shrink-0 text-muted-foreground">{t('booking.first_date')}</span><span className="font-medium">{date ? formatDate(date, locale) : ''}</span></div>
+                  <div className="flex justify-between gap-4"><span className="shrink-0 text-muted-foreground">{t('booking.time')}</span><span className="font-medium">{formatTime(time)}</span></div>
+                  <div className="flex justify-between gap-4"><span className="shrink-0 text-muted-foreground">{t('booking.step.format')}</span><span className="font-medium">{format === 'online' ? t('booking.online') : t('booking.offline')}</span></div>
+                  <div className="flex justify-between gap-4"><span className="shrink-0 text-muted-foreground">{t('booking.language')}</span><span className="font-medium">{sessionLang === 'ka' ? t('booking.lang.ka') : t('booking.lang.en')}</span></div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">{t('booking.valid_for')}</span>
                     <span className="font-medium">
-                      {numSessions === 3 && '1.5 months'}
-                      {numSessions === 4 && '2 months'}
-                      {numSessions === 5 && '3 months'}
-                      {numSessions === 6 && '3 months'}
-                      {numSessions === 7 && '5 months'}
+                      {fmt(t('booking.months_n'), { n: VALIDITY_MONTHS[numSessions] ?? '' })}
                     </span>
                   </div>
-                  {voucherValid && <div className="flex justify-between"><span className="text-muted-foreground">Voucher</span><span className="font-medium text-emerald-600">-${voucherDiscount}</span></div>}
+                  {voucherValid && <div className="flex justify-between gap-4"><span className="shrink-0 text-muted-foreground">{t('booking.step.voucher')}</span><span className="font-medium text-emerald-700">-${voucherDiscount}</span></div>}
                   <hr className="border-border" />
-                  <div className="flex justify-between text-base"><span className="font-semibold">Total</span><span className="font-heading text-xl font-bold text-primary">${total}</span></div>
+                  <div className="flex justify-between text-base"><span className="font-semibold">{t('booking.total')}</span><span className="font-heading text-xl font-bold text-primary">${total}</span></div>
                 </div>
-                <p className="text-xs text-muted-foreground text-center">After your first session, you&apos;ll choose date and time for each subsequent session. Unused sessions are not refunded after the validity period.</p>
+                <p className="text-xs text-muted-foreground text-center">{t('booking.confirm.note')}</p>
               </UICard>
             )}
           </motion.div>
         </AnimatePresence>
 
         {/* Navigation */}
-        <div className="mt-10 flex items-center justify-between">
-          <UIButton variant="outline" onClick={() => setStep(step - 1)} disabled={step === 0}>
+        <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <UIButton variant="outline" onClick={() => setStep(step - 1)} disabled={step === 0} className="w-full sm:w-auto">
             <ArrowLeft className="size-4" /> {t('booking.back')}
           </UIButton>
           {step < steps.length - 1 ? (
-            <UIButton onClick={() => setStep(step + 1)} disabled={!canContinue}>
+            <UIButton onClick={() => setStep(step + 1)} disabled={!canContinue} className="w-full sm:w-auto">
               {t('booking.continue')} <ArrowRight className="size-4" />
             </UIButton>
           ) : (
-            <UIButton onClick={confirm} disabled={confirming || !currentUser}>
+            <UIButton onClick={confirm} disabled={confirming || !currentUser} className="w-full sm:w-auto">
               {confirming ? t('booking.booking') : t('booking.confirm_pay')} <Check className="size-4" />
             </UIButton>
           )}
         </div>
+
+        {step === steps.length - 1 && !currentUser && (
+          <p className="mt-3 text-center text-sm text-muted-foreground sm:text-right">
+            {t('booking.login_required')}
+          </p>
+        )}
 
         <ConsultationCTA />
       </div>

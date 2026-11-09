@@ -28,6 +28,10 @@ class Booking(models.Model):
         ("online", "Online"),
         ("offline", "In-Person"),
     ]
+    LANGUAGE_CHOICES = [
+        ("ka", "Georgian"),
+        ("en", "English"),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
@@ -40,6 +44,10 @@ class Booking(models.Model):
     date = models.CharField(max_length=50, blank=True, default="")
     time = models.CharField(max_length=20, blank=True, default="")
     format = models.CharField(max_length=10, choices=FORMAT_CHOICES, default="online")
+    # Language the client asked for the sessions to be held in (booking wizard step 5)
+    session_language = models.CharField(
+        max_length=2, choices=LANGUAGE_CHOICES, default="ka"
+    )
 
     is_package = models.BooleanField(default=False)
     package_duration_months = models.PositiveSmallIntegerField(null=True, blank=True)

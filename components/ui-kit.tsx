@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, KeyboardEvent } from 'react'
 
 /* ----------------------------- Button ----------------------------- */
 type ButtonVariant = 'primary' | 'ghost' | 'dark' | 'outline'
@@ -48,13 +48,36 @@ export function UIButton({
 }
 
 /* ----------------------------- Card ----------------------------- */
-export function UICard({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+interface UICardProps extends HTMLAttributes<HTMLDivElement> {
+  /**
+   * A card with an onClick behaves like a button for keyboard and screen-reader
+   * users too (focusable, Enter/Space activate it). Pass false when the card
+   * already contains its own real button.
+   */
+  asButton?: boolean
+}
+
+export function UICard({ className, asButton, onClick, onKeyDown, ...props }: UICardProps) {
+  const interactive = asButton ?? !!onClick
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    onKeyDown?.(e)
+    if (!interactive || e.defaultPrevented || e.target !== e.currentTarget) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      e.currentTarget.click()
+    }
+  }
   return (
     <div
       className={cn(
         'rounded-2xl border border-border bg-card text-card-foreground',
+        interactive &&
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         className,
       )}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      {...(interactive ? { role: 'button', tabIndex: 0 } : {})}
       {...props}
     />
   )
@@ -81,7 +104,7 @@ export function UIBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary',
+        'inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-ink',
         className,
       )}
       {...props}
@@ -97,7 +120,7 @@ export function Eyebrow({
   return (
     <p
       className={cn(
-        'text-xs font-semibold uppercase tracking-[0.28em] text-primary',
+        'text-xs font-semibold uppercase tracking-[0.28em] text-primary-ink',
         className,
       )}
       {...props}

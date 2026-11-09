@@ -11,19 +11,17 @@ import { createBooking } from '@/lib/hooks/useBookings'
 import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { useT, useLocalized } from '@/lib/i18n'
+import { useT, useLocalized, useLocale, fmt } from '@/lib/i18n'
+import { WEEKDAY_LABELS, formatDate, monthYearLabel } from '@/lib/format'
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
 }
 
 function MiniCalendar({ availableDates, selected, onSelect }: { availableDates: string[], selected: Date | null, onSelect: (d: Date) => void }) {
+  const t = useT()
+  const locale = useLocale()
   const today = startOfDay(new Date())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -46,12 +44,12 @@ function MiniCalendar({ availableDates, selected, onSelect }: { availableDates: 
   return (
     <div className="w-full max-w-xs mx-auto">
       <div className="flex items-center justify-between mb-2">
-        <button onClick={() => { if (canPrev) { if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1) } else setViewMonth(viewMonth - 1) } }} disabled={!canPrev} className="p-1 rounded-lg hover:bg-secondary disabled:opacity-30"><ChevronLeft className="size-4" /></button>
-        <span className="text-xs font-semibold">{MONTH_NAMES[viewMonth]} {viewYear}</span>
-        <button onClick={() => { if (canNext) { if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1) } else setViewMonth(viewMonth + 1) } }} disabled={!canNext} className="p-1 rounded-lg hover:bg-secondary disabled:opacity-30"><ChevronRight className="size-4" /></button>
+        <button onClick={() => { if (canPrev) { if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1) } else setViewMonth(viewMonth - 1) } }} disabled={!canPrev} aria-label={t('booking.prev_month')} className="flex size-10 items-center justify-center rounded-lg hover:bg-secondary disabled:opacity-30"><ChevronLeft className="size-4" /></button>
+        <span className="text-sm font-semibold">{monthYearLabel(viewYear, viewMonth, locale)}</span>
+        <button onClick={() => { if (canNext) { if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1) } else setViewMonth(viewMonth + 1) } }} disabled={!canNext} aria-label={t('booking.next_month')} className="flex size-10 items-center justify-center rounded-lg hover:bg-secondary disabled:opacity-30"><ChevronRight className="size-4" /></button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 mb-1">
-        {WEEKDAYS.map((w) => <div key={w} className="text-center text-[9px] font-semibold text-muted-foreground py-0.5">{w}</div>)}
+        {WEEKDAY_LABELS[locale].map((w) => <div key={w} className="text-center text-[10px] font-semibold text-muted-foreground py-1">{w}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-0.5">
         {cells.map((cell, i) => {
@@ -63,7 +61,7 @@ function MiniCalendar({ availableDates, selected, onSelect }: { availableDates: 
           const disabled = isPast || !isAvailable
 
           return (
-            <button key={dateStr} disabled={disabled} onClick={() => onSelect(cell)} className={cn('aspect-square rounded text-[10px] font-medium transition-all relative', isSelected ? 'bg-primary text-primary-foreground' : '', !isSelected && isAvailable && !isPast ? 'hover:bg-primary/10' : '', disabled ? 'text-muted-foreground/30 cursor-not-allowed' : 'cursor-pointer')}>
+            <button key={dateStr} disabled={disabled} aria-label={formatDate(cell, locale, { weekday: true })} aria-pressed={!!isSelected} onClick={() => onSelect(cell)} className={cn('aspect-square rounded-lg text-xs font-medium transition-all relative sm:text-sm', isSelected ? 'bg-primary text-primary-foreground' : '', !isSelected && isAvailable && !isPast ? 'hover:bg-primary/10' : '', disabled ? 'text-muted-foreground/30 cursor-not-allowed' : 'cursor-pointer')}>
               {cell.getDate()}
             </button>
           )
@@ -131,13 +129,13 @@ export default function PackageBooking() {
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-6 flex size-20 items-center justify-center rounded-full bg-primary/10">
           <Check className="size-9 text-primary" />
         </motion.div>
-        <h2 className="font-heading text-3xl font-bold">Package booked!</h2>
+        <h2 className="font-heading text-3xl font-bold">{t('packages.done.title')}</h2>
         <p className="mt-3 max-w-md text-muted-foreground">
-          Your first session is scheduled. After each session, you&apos;ll choose the date, time, and format (live or online) for your next one from your dashboard.
+          {t('packages.done.body')}
         </p>
-        <p className="mt-2 text-sm text-muted-foreground">Package duration: {selectedPkg?.duration_months} months</p>
+        <p className="mt-2 text-sm text-muted-foreground">{fmt(t('packages.done.duration'), { n: selectedPkg?.duration_months ?? '' })}</p>
         <UIButton className="mt-8" onClick={() => { setDone(false); setSelectedPkg(null); setDate(null); setTime('') }}>
-          Back to packages
+          {t('packages.back')}
         </UIButton>
       </div>
     )
@@ -149,7 +147,7 @@ export default function PackageBooking() {
         <div className="mx-auto max-w-4xl px-6 text-center">
           <Eyebrow>{t('packages.eyebrow')}</Eyebrow>
           <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t('packages.title')}</h2>
-          <p className="mt-4 text-muted-foreground">{t('packages.title')}</p>
+          <p className="mt-4 text-muted-foreground">{t('packages.empty')}</p>
         </div>
       </section>
     )
@@ -157,12 +155,12 @@ export default function PackageBooking() {
 
   return (
     <section className="bg-background pb-16 pt-24 sm:pb-24 sm:pt-32" id="packages">
-      <div className="mx-auto max-w-4xl px-6">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
         <div className="text-center mb-10">
           <Eyebrow>{t('packages.eyebrow')}</Eyebrow>
           <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">{t('packages.title')}</h2>
           <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
-            {t('packages.title')}
+            {t('packages.subtitle')}
           </p>
         </div>
 
@@ -171,7 +169,7 @@ export default function PackageBooking() {
         {!selectedPkg ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {packages.map((pkg) => (
-              <UICard key={pkg.id} className="p-6 flex flex-col transition-all duration-200 hover:border-primary/30 hover:shadow-md cursor-pointer" onClick={() => setSelectedPkg(pkg)}>
+              <UICard key={pkg.id} className="p-6 flex flex-col transition-all duration-200 hover:border-primary/30 hover:shadow-md cursor-pointer" asButton={false} onClick={() => setSelectedPkg(pkg)}>
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="size-5 text-primary" />
                   <h3 className="font-heading text-lg font-bold">{l(pkg.title, pkg.title_ka)}</h3>
@@ -183,29 +181,29 @@ export default function PackageBooking() {
                 </div>
                 <div className="mt-auto">
                   <p className="font-heading text-2xl font-bold text-primary">${pkg.price}</p>
-                  <UIButton className="mt-3 w-full" size="sm">Select <ArrowRight className="size-4" /></UIButton>
+                  <UIButton className="mt-3 w-full" size="sm" onClick={() => setSelectedPkg(pkg)}>{t('packages.select')} <ArrowRight className="size-4" /></UIButton>
                 </div>
               </UICard>
             ))}
           </div>
         ) : (
           <div className="max-w-lg mx-auto space-y-6">
-            <UICard className="p-6">
-              <div className="flex items-center justify-between mb-4">
+            <UICard className="p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4 mb-4">
                 <h3 className="font-heading text-xl font-bold">{l(selectedPkg.title, selectedPkg.title_ka)}</h3>
-                <button onClick={() => setSelectedPkg(null)} className="text-sm text-muted-foreground hover:text-foreground">Change</button>
+                <button onClick={() => setSelectedPkg(null)} className="text-sm text-muted-foreground hover:text-foreground">{t('packages.change')}</button>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                Choose the date and time for your <strong>first session</strong>. After each session, you&apos;ll select the date for the next one from your dashboard.
+                {t('packages.first_session')}
               </p>
 
               {selectedPkg.sessions_detail && selectedPkg.sessions_detail.length > 1 && (
                 <div className="mb-4">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Start with</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t('packages.start_with')}</label>
                   <div className="flex flex-wrap gap-2">
                     {selectedPkg.sessions_detail.map(s => (
-                      <button key={s.id} onClick={() => { setFirstSessionId(s.id); setDate(null); setTime('') }} className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-all', (activeSessionId === s.id) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/50')}>
-                        {s.title}
+                      <button key={s.id} onClick={() => { setFirstSessionId(s.id); setDate(null); setTime('') }} className={cn('min-h-9 px-3 py-1.5 rounded-full text-xs font-medium border transition-all', (activeSessionId === s.id) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/50')}>
+                        {l(s.title, s.title_ka)}
                       </button>
                     ))}
                   </div>
@@ -213,7 +211,7 @@ export default function PackageBooking() {
               )}
 
               {availableDates.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No available times for this session yet. Ask the administrator to add availability under Sessions → Individual.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t('booking.no_times')}</p>
               ) : (
               <MiniCalendar availableDates={availableDates} selected={date} onSelect={(d) => { setDate(d); setTime('') }} />
               )}
@@ -221,7 +219,7 @@ export default function PackageBooking() {
               {date && timesForDate.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {timesForDate.map((slot) => (
-                    <button key={slot.id} onClick={() => setTime(slot.start_time)} className={cn('inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium border transition-all', time === slot.start_time ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/50')}>
+                    <button key={slot.id} onClick={() => setTime(slot.start_time)} className={cn('inline-flex min-h-10 items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-medium border transition-all', time === slot.start_time ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/50')}>
                       <Clock className="size-3" /> {slot.start_time.slice(0, 5)}
                     </button>
                   ))}
@@ -235,10 +233,10 @@ export default function PackageBooking() {
             </UICard>
 
             <UICard className="p-5">
-              <div className="flex justify-between text-sm mb-2"><span className="text-muted-foreground">Package</span><span className="font-medium">{selectedPkg.title}</span></div>
-              <div className="flex justify-between text-sm mb-2"><span className="text-muted-foreground">Duration</span><span className="font-medium">{selectedPkg.duration_months} months</span></div>
+              <div className="flex justify-between gap-4 text-sm mb-2"><span className="text-muted-foreground">{t('packages.package')}</span><span className="text-right font-medium">{l(selectedPkg.title, selectedPkg.title_ka)}</span></div>
+              <div className="flex justify-between text-sm mb-2"><span className="text-muted-foreground">{t('packages.duration')}</span><span className="font-medium">{selectedPkg.duration_months} {t('packages.months')}</span></div>
               <hr className="border-border my-2" />
-              <div className="flex justify-between"><span className="font-semibold">Total</span><span className="font-heading text-xl font-bold text-primary">${selectedPkg.price}</span></div>
+              <div className="flex justify-between"><span className="font-semibold">{t('booking.total')}</span><span className="font-heading text-xl font-bold text-primary">${selectedPkg.price}</span></div>
             </UICard>
 
             <UIButton className="w-full" onClick={confirm} disabled={confirming || !date || !time || !currentUser}>

@@ -51,17 +51,17 @@ export function PillarDetailPage({ pillarId, onBook, onBack, onNavigate }: Pilla
           </button>
 
           <Eyebrow>{t('pillar.detail.eyebrow')}</Eyebrow>
-          <h1 className="mt-3 font-heading text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+          <h1 className="mt-3 font-heading text-3xl font-bold leading-tight tracking-tight break-words sm:text-5xl">
             {l(pillar.title, pillar.title_ka)}
           </h1>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+          <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
             {l(pillar.blurb, pillar.blurb_ka)}
           </p>
 
           <ul className="mt-8 space-y-3">
             {(l(pillar.points, pillar.points_ka) || []).map((point: string) => (
-              <li key={point} className="flex items-center gap-3 text-foreground/85">
-                <span className="size-2 shrink-0 rounded-full bg-primary" />
+              <li key={point} className="flex items-start gap-3 text-foreground/85">
+                <span className="mt-2 size-2 shrink-0 rounded-full bg-primary" />
                 {point}
               </li>
             ))}
@@ -86,7 +86,7 @@ export function PillarDetailPage({ pillarId, onBook, onBack, onNavigate }: Pilla
           )}
 
           <div className="mt-12">
-            <UIButton size="lg" onClick={onBook}>
+            <UIButton size="lg" onClick={onBook} className="w-full sm:w-auto">
               {t('pillar.detail.book')}
               <ArrowRight className="size-4" />
             </UIButton>
