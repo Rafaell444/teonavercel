@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import {
   LayoutDashboard,
   TrendingUp,
@@ -21,8 +21,6 @@ import {
   FileText,
   Plus,
   ListChecks,
-  Menu,
-  X,
   ShieldAlert,
 } from 'lucide-react'
 import { UIButton, UICard, UIInput, Eyebrow, UIBadge } from '@/components/ui-kit'
@@ -34,7 +32,8 @@ import { useTests } from '@/lib/hooks/useTests'
 import { useDiary, addDiaryEntry } from '@/lib/hooks/useDiary'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { useT } from '@/lib/i18n'
+import { useT, useLocale, fmt } from '@/lib/i18n'
+import { formatDate, formatTime, dateParts } from '@/lib/format'
 
 type Tab =
   | 'Overview'
@@ -56,6 +55,17 @@ const navItems: { label: Tab | 'Book a Session'; icon: typeof LayoutDashboard }[
   { label: 'Profile', icon: UserRound },
 ]
 
+const tabKeys: Record<Tab | 'Book a Session', string> = {
+  Overview: 'dash.tab.overview',
+  Growth: 'dash.tab.growth',
+  'My Schedule': 'dash.tab.schedule',
+  'Private Vault': 'dash.tab.vault',
+  'My Tests': 'dash.tab.tests',
+  Diary: 'dash.tab.diary',
+  'Book a Session': 'dash.tab.book',
+  Profile: 'dash.tab.profile',
+}
+
 function SidebarContent({
   active,
   setActive,
@@ -65,6 +75,7 @@ function SidebarContent({
   setActive: (l: Tab) => void
   onBook: () => void
 }) {
+  const tr = useT()
   return (
     <>
       <span className="font-heading text-2xl font-bold">
@@ -82,6 +93,7 @@ function SidebarContent({
                   ? onBook()
                   : setActive(item.label as Tab)
               }
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors',
                 isActive
@@ -90,16 +102,16 @@ function SidebarContent({
               )}
             >
               <Icon className="size-[18px]" />
-              {item.label}
+              {tr(tabKeys[item.label])}
             </button>
           )
         })}
       </nav>
       <div className="mt-6 rounded-2xl border border-sidebar-border bg-sidebar-accent p-5">
         <Sparkles className="size-5 text-primary" />
-        <p className="mt-3 text-sm font-semibold">Unlock the Vault</p>
+        <p className="mt-3 text-sm font-semibold">{tr('dash.vault_card.title')}</p>
         <p className="mt-1 text-xs text-sidebar-foreground/60">
-          Exclusive recordings &amp; resources for Master tier.
+          {tr('dash.vault_card.body')}
         </p>
       </div>
     </>
@@ -109,47 +121,35 @@ function SidebarContent({
 function TopBar({
   active,
   name,
-  initials,
   tier,
-  onMenu,
 }: {
   active: Tab
   name: string
-  initials: string
   tier: string
-  onMenu: () => void
 }) {
+  const tr = useT()
   return (
-    <div className="flex items-center justify-between border-b border-border px-6 py-4">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onMenu}
-          aria-label="Open menu"
-          className="flex size-10 items-center justify-center rounded-full border border-border transition-colors hover:bg-secondary lg:hidden"
-        >
-          <Menu className="size-[18px]" />
-        </button>
-        <div>
-          <p className="text-sm text-muted-foreground">{active}</p>
-          <h1 className="font-heading text-xl font-bold tracking-tight">
-            Welcome back, {name}
+    <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground">{tr(tabKeys[active])}</p>
+          <h1 className="truncate font-heading text-lg font-bold tracking-tight sm:text-xl">
+            {fmt(tr('dash.welcome'), { name })}
           </h1>
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <span className="hidden items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-primary sm:inline-flex">
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-primary-ink">
           <Crown className="size-3.5" />
           {tier}
         </span>
-        <div className="flex size-10 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
-          {initials}
-        </div>
       </div>
     </div>
   )
 }
 
 function GamificationWidget({ xp, tier }: { xp: number; tier: string }) {
+  const tr = useT()
   const currentIdx = Math.max(0, tiers.findIndex((t) => t.name === tier))
   const nextTier = tiers[currentIdx + 1]
   const floor = tiers[currentIdx].xp
@@ -157,15 +157,15 @@ function GamificationWidget({ xp, tier }: { xp: number; tier: string }) {
   const progress = nextTier ? Math.min(100, ((xp - floor) / (ceil - floor)) * 100) : 100
 
   return (
-    <UICard className="overflow-hidden bg-foreground p-7 text-background">
+    <UICard className="overflow-hidden bg-foreground p-5 text-background sm:p-7">
       <div className="flex items-center justify-between">
-        <Eyebrow className="text-primary">Your Growth</Eyebrow>
+        <Eyebrow className="text-primary">{tr('dash.growth.eyebrow')}</Eyebrow>
         <span className="text-sm text-background/60">{xp.toLocaleString()} XP</span>
       </div>
-      <p className="mt-4 font-heading text-2xl font-bold">
+      <p className="mt-4 font-heading text-xl font-bold sm:text-2xl">
         {nextTier
-          ? `${(ceil - xp).toLocaleString()} XP to ${nextTier.name}`
-          : 'Max tier reached'}
+          ? fmt(tr('dash.growth.to_next'), { xp: (ceil - xp).toLocaleString(), tier: nextTier.name })
+          : tr('dash.growth.max')}
       </p>
       <div className="mt-6 h-3 w-full overflow-hidden rounded-full bg-background/15">
         <motion.div
@@ -209,10 +209,10 @@ function StatCard({
 }) {
   return (
     <UICard className="flex items-center gap-4 p-5">
-      <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Icon className="size-5" />
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="font-heading text-xl font-bold">{value}</p>
       </div>
@@ -230,7 +230,9 @@ function SectionHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
 }
 
 /* ----------------------------- Tab: Overview ----------------------------- */
-function OverviewTab({ onBook }: { onBook: () => void }) {
+function OverviewTab({ onBook, onOpenDiary }: { onBook: () => void; onOpenDiary: () => void }) {
+  const tr = useT()
+  const locale = useLocale()
   const { user: currentUser } = useMe()
   const { bookings } = useBookings()
   const { diary } = useDiary()
@@ -243,55 +245,63 @@ function OverviewTab({ onBook }: { onBook: () => void }) {
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <GamificationWidget xp={u.xp} tier={u.tier} />
         <div className="grid gap-6 sm:grid-cols-2">
-          <StatCard label="XP earned" value={u.xp.toLocaleString()} icon={TrendingUp} />
-          <StatCard label="Vouchers" value={`${u.vouchers} active`} icon={Gift} />
-          <StatCard label="Sessions" value={`${myBookings.length} booked`} icon={CalendarDays} />
-          <StatCard label="Current tier" value={u.tier} icon={Crown} />
+          <StatCard label={tr('dash.stat.xp')} value={u.xp.toLocaleString()} icon={TrendingUp} />
+          <StatCard label={tr('dash.stat.vouchers')} value={fmt(tr('dash.stat.vouchers_n'), { n: u.vouchers })} icon={Gift} />
+          <StatCard label={tr('dash.stat.sessions')} value={fmt(tr('dash.stat.sessions_n'), { n: myBookings.length })} icon={CalendarDays} />
+          <StatCard label={tr('dash.stat.tier')} value={u.tier} icon={Crown} />
         </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <UICard className="flex flex-col justify-between bg-primary p-7 text-primary-foreground">
+        <UICard className="flex flex-col justify-between bg-primary p-5 text-primary-foreground sm:p-7">
           <div>
-            <Eyebrow className="text-primary-foreground/70">Next Session</Eyebrow>
+            <Eyebrow className="text-primary-foreground/70">{tr('dash.next.eyebrow')}</Eyebrow>
             <h3 className="mt-4 font-heading text-2xl font-bold">
-              {nextBooking ? nextBooking.session_title : 'No sessions yet'}
+              {nextBooking ? nextBooking.session_title : tr('dash.next.none')}
             </h3>
             <div className="mt-5 space-y-2 text-sm">
               <p className="flex items-center gap-2">
                 <Clock className="size-4" />{' '}
-                {nextBooking ? `${nextBooking.date} · ${nextBooking.time}` : 'Book your first session'}
+                {nextBooking
+                  ? `${formatDate(nextBooking.date, locale)} · ${formatTime(nextBooking.time)}`
+                  : tr('dash.next.book_first')}
               </p>
               <p className="flex items-center gap-2">
                 <MapPin className="size-4" />{' '}
                 {nextBooking
                   ? nextBooking.format === 'online'
-                    ? 'Online · Zoom'
-                    : 'In-Person · Lisbon'
+                    ? tr('dash.next.online')
+                    : tr('format.in_person')
                   : '—'}
               </p>
             </div>
           </div>
           <UIButton variant="dark" onClick={onBook} className="mt-8 w-full">
-            {nextBooking ? 'Manage booking' : 'Book a session'}
+            {nextBooking ? tr('dash.next.book_another') : tr('dash.tab.book')}
             <ArrowRight className="size-4" />
           </UIButton>
         </UICard>
-        <UICard className="p-7">
+        <UICard className="p-5 sm:p-7">
           <div className="flex items-center justify-between">
-            <Eyebrow>Recent Diary</Eyebrow>
-            <span className="text-sm font-semibold text-primary">View all</span>
+            <Eyebrow>{tr('dash.diary.recent')}</Eyebrow>
+            <button
+              type="button"
+              onClick={onOpenDiary}
+              className="text-sm font-semibold text-primary-ink hover:underline"
+            >
+              {tr('dash.diary.view_all')}
+            </button>
           </div>
           <div className="mt-5 divide-y divide-border">
             {diary.slice(0, 3).map((entry, i) => (
-              <div key={String(entry.id ?? '') + i} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
-                <span className="mt-0.5 w-16 shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {entry.date}
+              <div key={String(entry.id ?? '') + i} className="flex flex-wrap items-start gap-x-4 gap-y-1 py-4 first:pt-0 last:pb-0">
+                <span className="mt-0.5 w-full shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:w-20">
+                  {formatDate(entry.date, locale, { year: false })}
                 </span>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold">{entry.title}</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">{entry.excerpt}</p>
                 </div>
-                <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-foreground/70">
+                <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-foreground/70">
                   {entry.mood}
                 </span>
               </div>
@@ -308,15 +318,17 @@ function GrowthTab() {
   const { user: currentUser } = useMe()
   const u = currentUser!
   const done = growthMilestones.filter((m) => m.done).length
+  const tr = useT()
+  const locale = useLocale()
   return (
     <div className="space-y-6">
-      <SectionHeader eyebrow="Your Journey" title="Growth & milestones" />
+      <SectionHeader eyebrow={tr('dash.journey.eyebrow')} title={tr('dash.journey.title')} />
       <GamificationWidget xp={u.xp} tier={u.tier} />
-      <UICard className="p-7">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading text-lg font-bold">Milestones</h3>
+      <UICard className="p-5 sm:p-7">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="font-heading text-lg font-bold">{tr('dash.milestones')}</h3>
           <span className="text-sm text-muted-foreground">
-            {done}/{growthMilestones.length} complete
+            {fmt(tr('dash.milestones.count'), { done, total: growthMilestones.length })}
           </span>
         </div>
         <div className="mt-5 space-y-3">
@@ -334,7 +346,7 @@ function GrowthTab() {
                 {m.done ? <Check className="size-3.5" /> : <span className="size-1.5 rounded-full bg-muted-foreground" />}
               </span>
               <span className={cn('text-sm font-medium', !m.done && 'text-muted-foreground')}>
-                {m.label}
+                {locale === 'ka' ? m.label_ka : m.label}
               </span>
             </div>
           ))}
@@ -347,92 +359,100 @@ function GrowthTab() {
 /* ----------------------------- Tab: Schedule ----------------------------- */
 function ScheduleTab({ onBook }: { onBook: () => void }) {
   const { bookings: myBookings } = useBookings()
+  const tr = useT()
+  const locale = useLocale()
+  // Statuses come from the server in English; fall back to the raw value if one is new
+  const statusLabel = (status: string) => {
+    const key = `status.${status}`
+    const label = tr(key)
+    return label === key ? status : label
+  }
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <SectionHeader eyebrow="Upcoming" title="My sessions" />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <SectionHeader eyebrow={tr('dash.schedule.eyebrow')} title={tr('dash.schedule.title')} />
         <UIButton size="sm" onClick={onBook}>
-          <Plus className="size-4" /> New booking
+          <Plus className="size-4" /> {tr('dash.schedule.new')}
         </UIButton>
       </div>
       {myBookings.length === 0 && (
         <UICard className="p-8 text-center text-muted-foreground">
-          No bookings yet. Book your first session to see it here.
+          {tr('dash.schedule.empty')}
         </UICard>
       )}
       <div className="space-y-4">
         {myBookings.map((s) => {
           const needsScheduling = s.sessions_used < s.num_sessions && s.booking_sessions?.length < s.num_sessions && !s.is_expired
           return (
-            <UICard key={s.id} className="p-6 space-y-3">
+            <UICard key={s.id} className="space-y-3 p-4 sm:p-6">
               {s.is_expired && (
                 <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-xs font-medium text-destructive">
-                  This booking has expired. Sessions can no longer be scheduled.
+                  {tr('dash.schedule.expired')}
                 </div>
               )}
               {!s.is_expired && s.expires_at && (
-                <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 px-3 py-2 text-xs font-medium text-orange-600">
-                  Expires: {new Date(s.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 px-3 py-2 text-xs font-medium text-orange-700">
+                  {fmt(tr('dash.schedule.expires'), { date: formatDate(s.expires_at, locale) })}
                 </div>
               )}
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex size-14 flex-col items-center justify-center rounded-xl bg-secondary text-center">
+                  <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-secondary text-center">
                     <span className="text-[10px] font-medium uppercase text-muted-foreground">
-                      {s.date ? s.date.split(' ')[0] : '—'}
+                      {dateParts(s.date, locale)?.month ?? (s.date ? s.date.split(' ')[0] : '—')}
                     </span>
                     <span className="font-heading text-lg font-bold leading-none">
-                      {s.date ? (s.date.split(' ')[1]?.replace(',', '') ?? '·') : '·'}
+                      {dateParts(s.date, locale)?.day ?? (s.date ? (s.date.split(' ')[1]?.replace(',', '') ?? '·') : '·')}
                     </span>
                   </div>
                   <div>
                     <p className="font-semibold">{s.session_title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {s.sessions_used}/{s.num_sessions} sessions used
-                      {s.is_package && ' · Package'}
+                      {fmt(tr('dash.schedule.used'), { used: s.sessions_used, total: s.num_sessions })}
+                      {s.is_package && ` · ${tr('packages.package')}`}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                      {s.time && <span className="inline-flex items-center gap-1"><Clock className="size-3" /> {s.time}</span>}
+                      {s.time && <span className="inline-flex items-center gap-1"><Clock className="size-3" /> {formatTime(s.time)}</span>}
                       <span className="inline-flex items-center gap-1">
-                        <MapPin className="size-3" /> {s.format === 'online' ? 'Online' : 'In-Person'}
+                        <MapPin className="size-3" /> {s.format === 'online' ? tr('booking.online') : tr('format.in_person')}
                       </span>
                     </div>
                     {s.meet_link && (
-                      <a href={s.meet_link} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                        Join Google Meet
+                      <a href={s.meet_link} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs text-primary-ink hover:underline">
+                        {tr('dash.schedule.join')}
                       </a>
                     )}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-col sm:items-end">
                   <span
                     className={cn(
                       'rounded-full px-3 py-1 text-xs font-semibold',
-                      s.status === 'Confirmed' ? 'bg-primary/10 text-primary' :
-                      s.status === 'Expired' ? 'bg-orange-500/10 text-orange-600' :
+                      s.status === 'Confirmed' ? 'bg-primary/10 text-primary-ink' :
+                      s.status === 'Expired' ? 'bg-orange-500/10 text-orange-700' :
                       s.status === 'Cancelled' ? 'bg-destructive/10 text-destructive' :
                       'bg-secondary text-muted-foreground',
                     )}
                   >
-                    {s.status}
+                    {statusLabel(s.status)}
                   </span>
                   {needsScheduling && (
-                    <span className="text-xs text-primary font-medium">Schedule next session from your calendar</span>
+                    <span className="text-xs text-primary-ink font-medium">{tr('dash.schedule.next_hint')}</span>
                   )}
                 </div>
               </div>
               {/* Show individual sessions within this booking */}
               {s.booking_sessions && s.booking_sessions.length > 0 && (
                 <div className="mt-3 border-t border-border pt-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground mb-2">Sessions</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground mb-2">{tr('dash.schedule.sessions')}</p>
                   <div className="space-y-1.5">
                     {s.booking_sessions.map((bs) => (
-                      <div key={bs.id} className="flex items-center justify-between text-xs">
-                        <span>#{bs.session_number} — {bs.date || 'Not scheduled'} {bs.time ? `at ${bs.time}` : ''}</span>
-                        <div className="flex items-center gap-2">
-                          {bs.meet_link && <a href={bs.meet_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Meet link</a>}
-                          <span className={cn('rounded-full px-2 py-0.5 font-medium', bs.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' : bs.status === 'scheduled' ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground')}>
-                            {bs.status}
+                      <div key={bs.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
+                        <span>#{bs.session_number} — {bs.date ? formatDate(bs.date, locale) : tr('dash.schedule.not_scheduled')}{bs.time ? ` · ${formatTime(bs.time)}` : ''}</span>
+                        <div className="flex shrink-0 items-center gap-2">
+                          {bs.meet_link && <a href={bs.meet_link} target="_blank" rel="noopener noreferrer" className="text-primary-ink hover:underline">{tr('dash.schedule.meet')}</a>}
+                          <span className={cn('rounded-full px-2 py-0.5 font-medium', bs.status === 'completed' ? 'bg-emerald-500/10 text-emerald-700' : bs.status === 'scheduled' ? 'bg-primary/10 text-primary-ink' : 'bg-secondary text-muted-foreground')}>
+                            {statusLabel(bs.status)}
                           </span>
                         </div>
                       </div>
@@ -454,11 +474,12 @@ function VaultTab() {
   const { vault } = useVault()
   const personal = vault.filter((v) => v.assigned_to_id === currentUser?.id)
   const shared = vault.filter((v) => v.assigned_to_id === null)
+  const tr = useT()
 
   const VaultCard = ({ v }: { v: (typeof vault)[number] }) => {
     const Icon = v.kind.startsWith('PDF') || v.category === 'Book' ? FileText : PlayCircle
     return (
-      <UICard className={cn('flex items-center gap-4 p-5', v.locked && 'opacity-70')}>
+      <UICard className={cn('flex items-center gap-4 p-4 sm:p-5', v.locked && 'opacity-70')}>
         <div
           className={cn(
             'flex size-12 shrink-0 items-center justify-center rounded-xl',
@@ -467,9 +488,9 @@ function VaultTab() {
         >
           {v.locked ? <Lock className="size-5" /> : <Icon className="size-5" />}
         </div>
-        <div className="flex-1">
-          <p className="font-semibold">{v.title}</p>
-          <p className="text-xs text-muted-foreground">{v.kind} · by {v.added_by_name}</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold break-words">{v.title}</p>
+          <p className="text-xs text-muted-foreground">{v.kind}{v.added_by_name ? ` · ${fmt(tr('dash.by'), { name: v.added_by_name })}` : ''}</p>
         </div>
         {v.locked ? (
           <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
@@ -483,7 +504,7 @@ function VaultTab() {
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:scale-105 active:scale-95"
           >
             <ArrowRight className="size-3.5" />
-            Open
+            {tr('dash.vault.open')}
           </a>
         ) : null}
       </UICard>
@@ -492,16 +513,15 @@ function VaultTab() {
 
   return (
     <div className="space-y-8">
-      <SectionHeader eyebrow="Members Only" title="Private vault" />
+      <SectionHeader eyebrow={tr('dash.vault.eyebrow')} title={tr('dash.vault.title')} />
 
       <div>
         <div className="mb-4 flex items-center gap-2">
-          <UIBadge>Assigned to you</UIBadge>
+          <UIBadge>{tr('dash.vault.assigned')}</UIBadge>
         </div>
         {personal.length === 0 ? (
           <UICard className="p-6 text-sm text-muted-foreground">
-            Your coach hasn&apos;t uploaded anything personal yet. Items assigned to you
-            from the admin panel will appear here.
+            {tr('dash.vault.assigned_empty')}
           </UICard>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -514,7 +534,7 @@ function VaultTab() {
 
       <div>
         <div className="mb-4 flex items-center gap-2">
-          <UIBadge>Shared library</UIBadge>
+          <UIBadge>{tr('dash.vault.shared')}</UIBadge>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {shared.map((v) => (
@@ -532,18 +552,19 @@ function MyTestsTab() {
   const { tests } = useTests()
   const assignedTests = vault.filter((v) => v.category === 'Test')
   const open = tests.filter((t) => t.published)
+  const tr = useT()
 
   return (
     <div className="space-y-8">
-      <SectionHeader eyebrow="Assigned & open" title="My tests" />
+      <SectionHeader eyebrow={tr('dash.tests.eyebrow')} title={tr('dash.tests.title')} />
 
       <div>
         <div className="mb-4">
-          <UIBadge>Assigned by your coach</UIBadge>
+          <UIBadge>{tr('dash.tests.assigned')}</UIBadge>
         </div>
         {assignedTests.length === 0 ? (
           <UICard className="p-6 text-sm text-muted-foreground">
-            No tests have been assigned to you yet.
+            {tr('dash.tests.assigned_empty')}
           </UICard>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -554,7 +575,7 @@ function MyTestsTab() {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold">{v.title}</p>
-                  <p className="text-xs text-muted-foreground">Assigned by {v.added_by_name}</p>
+                  <p className="text-xs text-muted-foreground">{fmt(tr('dash.tests.assigned_by'), { name: v.added_by_name ?? '' })}</p>
                 </div>
               </UICard>
             ))}
@@ -564,7 +585,7 @@ function MyTestsTab() {
 
       <div>
         <div className="mb-4">
-          <UIBadge>Open assessments</UIBadge>
+          <UIBadge>{tr('dash.tests.open')}</UIBadge>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {open.map((t) => (
@@ -572,7 +593,7 @@ function MyTestsTab() {
               <p className="font-semibold">{t.title}</p>
               <p className="mt-1 text-sm text-muted-foreground">{t.description}</p>
               <p className="mt-3 text-xs text-muted-foreground">
-                {t.questions.length} questions · {t.category}
+                {fmt(tr('tests.questions_n'), { n: t.questions.length })} · {t.category}
               </p>
             </UICard>
           ))}
@@ -586,6 +607,7 @@ function MyTestsTab() {
 function DiaryTab() {
   const { diary } = useDiary()
   const t = useT()
+  const locale = useLocale()
   const [draft, setDraft] = useState('')
   const [diaryError, setDiaryError] = useState('')
 
@@ -596,9 +618,9 @@ function DiaryTab() {
     try {
       await addDiaryEntry({
         date: new Date().toISOString().split('T')[0],
-        title: 'New reflection',
+        title: t('dash.diary.new_title'),
         excerpt: draft.trim(),
-        mood: 'Open',
+        mood: t('dash.diary.mood_open'),
       })
       setDraft('')
     } catch (err) {
@@ -617,9 +639,10 @@ function DiaryTab() {
         <form onSubmit={addEntry} className="flex flex-col gap-3 sm:flex-row">
           <UIInput
             value={draft}
+            aria-label={t('dashboard.diary.placeholder')}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={t('dashboard.diary.placeholder')}
-            className="flex-1"
+            className="sm:flex-1"
           />
           <UIButton type="submit" className="shrink-0">
             {t('dashboard.diary.add')}
@@ -632,15 +655,15 @@ function DiaryTab() {
       </UICard>
       <div className="space-y-3">
         {diary.map((entry, i) => (
-          <UICard key={String(entry.id ?? '') + i} className="flex items-start gap-4 p-5">
-            <span className="mt-0.5 w-16 shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {entry.date}
+          <UICard key={String(entry.id ?? '') + i} className="flex flex-wrap items-start gap-x-4 gap-y-1 p-5">
+            <span className="mt-0.5 w-full shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:w-20">
+              {formatDate(entry.date, locale, { year: false })}
             </span>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <p className="font-semibold">{entry.title}</p>
               <p className="mt-0.5 text-sm text-muted-foreground">{entry.excerpt}</p>
             </div>
-            <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-foreground/70">
+            <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-foreground/70">
               {entry.mood}
             </span>
           </UICard>
@@ -658,6 +681,8 @@ function ProfileTab() {
   const [email, setEmail] = useState(u?.email ?? '')
   const [saved, setSaved] = useState(false)
   const [profileError, setProfileError] = useState('')
+  const tr = useT()
+  const fid = useId()
 
   const save = async () => {
     setProfileError('')
@@ -682,47 +707,47 @@ function ProfileTab() {
           if (Array.isArray(val)) msgs.push(`${key.replace(/_/g, ' ')}: ${val.join(' ')}`)
           else if (typeof val === 'string') msgs.push(val)
         }
-        setProfileError(msgs.join(' ') || 'Failed to save changes.')
+        setProfileError(msgs.join(' ') || tr('dash.profile.error'))
       } else {
-        setProfileError('Failed to save changes. Please try again.')
+        setProfileError(tr('dash.profile.error'))
       }
     }
   }
 
   return (
     <div className="space-y-6">
-      <SectionHeader eyebrow="Account" title="Your profile" />
-      <UICard className="p-7">
-        <div className="flex items-center gap-5">
-          <div className="flex size-20 items-center justify-center rounded-full bg-foreground text-2xl font-semibold text-background">
+      <SectionHeader eyebrow={tr('dash.profile.eyebrow')} title={tr('dash.profile.title')} />
+      <UICard className="p-5 sm:p-7">
+        <div className="flex items-center gap-4 sm:gap-5">
+          <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-foreground text-xl font-semibold text-background sm:size-20 sm:text-2xl">
             {u.initials}
           </div>
-          <div>
-            <p className="font-heading text-2xl font-bold">{u.name}</p>
-            <p className="flex items-center gap-1.5 text-sm text-primary">
-              <Crown className="size-4" /> {u.tier} tier · {u.xp.toLocaleString()} XP
+          <div className="min-w-0">
+            <p className="font-heading text-xl font-bold break-words sm:text-2xl">{u.name}</p>
+            <p className="flex items-center gap-1.5 text-sm text-primary-ink">
+              <Crown className="size-4" /> {fmt(tr('dash.profile.tier_xp'), { tier: u.tier, xp: u.xp.toLocaleString() })}
             </p>
           </div>
         </div>
         <div className="mt-8 grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              Full name
+            <label htmlFor={`${fid}-0`} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {tr('auth.name')}
             </label>
-            <UIInput value={name} onChange={(e) => setName(e.target.value)} />
+            <UIInput id={`${fid}-0`} value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              Email
+            <label htmlFor={`${fid}-1`} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {tr('auth.email')}
             </label>
-            <UIInput value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
+            <UIInput id={`${fid}-1`} value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
           </div>
         </div>
         {profileError && (
           <p className="mt-4 text-sm text-red-600 dark:text-red-400">{profileError}</p>
         )}
-        <UIButton className="mt-7" onClick={save}>
-          {saved ? 'Saved!' : 'Save changes'}
+        <UIButton className="mt-7 w-full sm:w-auto" onClick={save}>
+          {saved ? tr('dash.profile.saved') : tr('dash.profile.save')}
         </UIButton>
       </UICard>
     </div>
@@ -732,14 +757,24 @@ function ProfileTab() {
 export function Dashboard({ onBook }: { onBook: () => void }) {
   const { user: currentUser } = useMe()
   const [active, setActive] = useState<Tab>('Overview')
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const tr = useT()
+  const stripRef = useRef<HTMLElement>(null)
+
+  // Keep the active section's chip in view in the phone/tablet strip. Only the
+  // strip itself is scrolled sideways, never the page.
+  useEffect(() => {
+    const strip = stripRef.current
+    const chip = strip?.querySelector<HTMLElement>('[aria-current="page"]')
+    if (!strip || !chip) return
+    strip.scrollTo({
+      left: chip.offsetLeft - strip.clientWidth / 2 + chip.clientWidth / 2,
+      behavior: 'smooth',
+    })
+  }, [active])
 
   if (!currentUser) return null
 
-  const pick = (t: Tab) => {
-    setActive(t)
-    setDrawerOpen(false)
-  }
+  const pick = (t: Tab) => setActive(t)
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -748,43 +783,47 @@ export function Dashboard({ onBook }: { onBook: () => void }) {
         <SidebarContent active={active} setActive={pick} onBook={onBook} />
       </aside>
 
-      {/* Mobile drawer */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden">
-          <div
-            className="absolute inset-0 bg-foreground/50 backdrop-blur-sm"
-            onClick={() => setDrawerOpen(false)}
-            aria-hidden
-          />
-          <motion.aside
-            initial={{ x: -280 }}
-            animate={{ x: 0 }}
-            className="relative flex h-full w-72 flex-col bg-sidebar p-6 text-sidebar-foreground"
-          >
-            <button
-              onClick={() => setDrawerOpen(false)}
-              aria-label="Close menu"
-              className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent"
-            >
-              <X className="size-5" />
-            </button>
-            <SidebarContent active={active} setActive={pick} onBook={onBook} />
-          </motion.aside>
-        </div>
-      )}
-
-      <div className="flex min-h-screen flex-1 flex-col">
-        <div className="pt-20 lg:pt-20">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        <div className="pt-20">
           <TopBar
             active={active}
             name={currentUser.name.split(' ')[0]}
-            initials={currentUser.initials}
             tier={currentUser.tier}
-            onMenu={() => setDrawerOpen(true)}
           />
+          {/* Phones and tablets: the sections as one scrollable row. This replaces
+              the old slide-out drawer, whose menu button sat right under the site
+              header's own menu button. The sidebar takes over from lg up. */}
+          <nav
+            ref={stripRef}
+            aria-label={tr('dash.sections')}
+            className="flex gap-1.5 overflow-x-auto border-b border-border px-4 py-3 [scrollbar-width:none] sm:px-6 lg:hidden [&::-webkit-scrollbar]:hidden"
+          >
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = active === item.label
+              return (
+                <button
+                  key={item.label}
+                  onClick={() =>
+                    item.label === 'Book a Session' ? onBook() : pick(item.label as Tab)
+                  }
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-medium transition-colors',
+                    isActive
+                      ? 'bg-foreground text-background'
+                      : 'bg-secondary text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <Icon className="size-3.5 shrink-0" />
+                  {tr(tabKeys[item.label])}
+                </button>
+              )
+            })}
+          </nav>
         </div>
-        <main className="flex-1 p-6">
-          {active === 'Overview' && <OverviewTab onBook={onBook} />}
+        <main className="min-w-0 flex-1 p-4 sm:p-6">
+          {active === 'Overview' && <OverviewTab onBook={onBook} onOpenDiary={() => pick('Diary')} />}
           {active === 'Growth' && <GrowthTab />}
           {active === 'My Schedule' && <ScheduleTab onBook={onBook} />}
           {active === 'Private Vault' && <VaultTab />}

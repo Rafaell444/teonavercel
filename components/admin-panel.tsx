@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import {
   Users,
   ListChecks,
@@ -86,6 +86,92 @@ const tabs: { label: AdminTab; icon: typeof Users }[] = [
   { label: 'Messages', icon: Mail },
   { label: 'Content', icon: Settings },
 ]
+
+/* ============================ Delete confirmation ============================ */
+/**
+ * Every delete in the admin panel goes through this: it asks first, shows a
+ * "Deleting…" state while the request runs, and shows the error if it fails.
+ * `what` completes the sentence "Delete …?", e.g. `the user "Elena Voss"`.
+ */
+type ConfirmDelete = (what: string, action: () => Promise<unknown> | unknown) => void
+
+const ConfirmDeleteContext = createContext<ConfirmDelete>(() => {})
+const useConfirmDelete = () => useContext(ConfirmDeleteContext)
+
+function ConfirmDeleteProvider({ children }: { children: React.ReactNode }) {
+  const [pending, setPending] = useState<{ what: string; action: () => Promise<unknown> | unknown } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const confirmDelete = useCallback<ConfirmDelete>((what, action) => {
+    setError('')
+    setPending({ what, action })
+  }, [])
+
+  const cancel = useCallback(() => {
+    if (busy) return
+    setPending(null)
+    setError('')
+  }, [busy])
+
+  const run = async () => {
+    if (!pending) return
+    setBusy(true)
+    setError('')
+    try {
+      await pending.action()
+      setPending(null)
+    } catch (e) {
+      setError(getErrorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!pending) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cancel()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pending, cancel])
+
+  return (
+    <ConfirmDeleteContext.Provider value={confirmDelete}>
+      {children}
+      {pending && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-labelledby="confirm-delete-title">
+          <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" onClick={cancel} aria-hidden />
+          <div className="relative w-full max-w-sm rounded-3xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex size-11 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <Trash2 className="size-5" />
+            </div>
+            <h3 id="confirm-delete-title" className="mt-4 font-heading text-xl font-bold break-words">
+              Delete {pending.what}?
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">This cannot be undone.</p>
+            {error && (
+              <p role="alert" className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+            )}
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <UIButton variant="outline" size="sm" onClick={cancel} disabled={busy} autoFocus>
+                Cancel
+              </UIButton>
+              <button
+                onClick={run}
+                disabled={busy}
+                className="inline-flex h-9 items-center justify-center rounded-full bg-destructive px-4 text-xs font-medium uppercase tracking-[0.12em] text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {busy ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </ConfirmDeleteContext.Provider>
+  )
+}
 
 /* =============================== Overview =============================== */
 function OverviewTab({ go }: { go: (t: AdminTab) => void }) {
@@ -200,6 +286,7 @@ function OverviewTab({ go }: { go: (t: AdminTab) => void }) {
 /* =============================== Users =============================== */
 function UsersTab() {
   const { users } = useAdminUsers()
+  const confirmDelete = useConfirmDelete()
   const tierOptions: AppUser['tier'][] = ['Explorer', 'Achiever', 'Master', 'Luminary']
   const [search, setSearch] = useState('')
   const filtered = users.filter(
@@ -253,7 +340,7 @@ function UsersTab() {
               </button>
               {u.role !== 'admin' && (
                 <button
-                  onClick={() => deleteAdminUser(u.id)}
+                  onClick={() => confirmDelete(`the user "${u.name}"`, () => deleteAdminUser(u.id))}
                   aria-label="Remove user"
                   className="flex size-9 items-center justify-center rounded-lg border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95"
                 >
@@ -456,6 +543,7 @@ function TestEditor({ test, onSave, onCancel }: { test: Test; onSave: (t: Test) 
 
 function TestsTab() {
   const { tests } = useTests()
+  const confirmDelete = useConfirmDelete()
   const [editing, setEditing] = useState<Test | null>(null)
   const [saveError, setSaveError] = useState('')
 
@@ -509,7 +597,7 @@ function TestsTab() {
             <p className="mt-3 text-xs text-muted-foreground">{t.questions.length} questions</p>
             <div className="mt-4 flex gap-2">
               <UIButton size="sm" variant="outline" onClick={() => setEditing(t)}><Pencil className="size-3.5" /> Edit</UIButton>
-              <button onClick={() => deleteTest(t.id)} aria-label="Delete test" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
+              <button onClick={() => confirmDelete(`the test "${t.title}"`, () => deleteTest(t.id))} aria-label="Delete test" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
                 <Trash2 className="size-4" />
               </button>
             </div>
@@ -524,6 +612,7 @@ function TestsTab() {
 function VaultTab() {
   const { users } = useAdminUsers()
   const { vault } = useVault()
+  const confirmDelete = useConfirmDelete()
   const members = users.filter((u) => u.role === 'member')
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState('PDF · 1 page')
@@ -620,7 +709,7 @@ function VaultTab() {
                     <ExternalLink className="size-4" />
                   </a>
                 )}
-                <button onClick={() => deleteVaultItem(v.id)} aria-label="Remove item" className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
+                <button onClick={() => confirmDelete(`the vault item "${v.title}"`, () => deleteVaultItem(v.id))} aria-label="Remove item" className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
                   <Trash2 className="size-4" />
                 </button>
               </div>
@@ -650,6 +739,7 @@ function BookingsTab() {
               <p className="text-sm text-muted-foreground">
                 {b.user_name} · {b.num_sessions} sessions · {b.format === 'online' ? 'Online' : 'In-Person'}
                 {b.is_package && ' · Package'}
+                {b.session_language && ` · ${b.session_language === 'en' ? 'English' : 'Georgian'}`}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Used: {b.sessions_used}/{b.num_sessions}
@@ -680,6 +770,7 @@ const typeOptions = ['Live Seminar', 'Weekend Retreat', 'Private Session', 'Grou
 
 function EventsTab() {
   const { events } = useEvents()
+  const confirmDelete = useConfirmDelete()
   const [editing, setEditing] = useState<EventItem | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -811,7 +902,7 @@ function EventsTab() {
               <p className="mt-1 text-xs text-muted-foreground">{event.date} · {event.location} · {event.seats}</p>
               <div className="mt-3 flex gap-2">
                 <UIButton size="sm" variant="outline" onClick={() => { setEditing(event); setIsNew(false); setImageFile(null); setImagePreview(null) }}><Pencil className="size-3.5" /> Edit</UIButton>
-                <button onClick={() => deleteEvent(event.id)} aria-label="Delete event" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
+                <button onClick={() => confirmDelete(`the event "${event.title}"`, () => deleteEvent(event.id))} aria-label="Delete event" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
                   <Trash2 className="size-4" />
                 </button>
               </div>
@@ -827,6 +918,7 @@ function EventsTab() {
 /* =============================== Sessions =============================== */
 function SessionsTab() {
   const { sessions: groupSessions } = useSessions('group')
+  const confirmDelete = useConfirmDelete()
   const { sessions: individualSessions } = useSessions('individual')
   const [subTab, setSubTab] = useState<'group' | 'individual'>('individual')
   const [showForm, setShowForm] = useState(false)
@@ -946,7 +1038,7 @@ function SessionsTab() {
 
       <div className="space-y-3">
         {sessions.map((s) => (
-          <SessionCard key={s.id} session={s} sessionType={subTab} onDelete={() => deleteSession(s.id)} />
+          <SessionCard key={s.id} session={s} sessionType={subTab} onDelete={() => confirmDelete(`the session "${s.title}"`, () => deleteSession(s.id))} />
         ))}
         {sessions.length === 0 && <UICard className="p-8 text-center text-muted-foreground">No {subTab} sessions yet.</UICard>}
       </div>
@@ -1053,13 +1145,10 @@ function IndividualAvailabilityPanel({ sessionId }: { sessionId: string }) {
     }
   }
 
-  const handleDelete = async (slotId: string) => {
+  const confirmDelete = useConfirmDelete()
+  const handleDelete = (slotId: string) => {
     setSlotError('')
-    try {
-      await deleteTimeSlot(sessionId, slotId)
-    } catch (e) {
-      setSlotError(getErrorMessage(e))
-    }
+    confirmDelete('this time slot', () => deleteTimeSlot(sessionId, slotId))
   }
 
   return (
@@ -1233,6 +1322,7 @@ function SessionCard({ session: s, sessionType, onDelete }: { session: Session, 
 /* =============================== Packages =============================== */
 function PackagesTab() {
   const { packages } = usePackages()
+  const confirmDelete = useConfirmDelete()
   const { sessions } = useSessions('individual')
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
@@ -1314,7 +1404,7 @@ function PackagesTab() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-heading text-lg font-bold text-primary">${p.price}</span>
-                <button onClick={() => deletePackage(p.id)} aria-label="Delete package" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
+                <button onClick={() => confirmDelete(`the package "${p.title}"`, () => deletePackage(p.id))} aria-label="Delete package" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
                   <Trash2 className="size-4" />
                 </button>
               </div>
@@ -1330,6 +1420,7 @@ function PackagesTab() {
 /* =============================== Vouchers =============================== */
 function VouchersTab() {
   const { vouchers } = useVouchers()
+  const confirmDelete = useConfirmDelete()
   const [showForm, setShowForm] = useState(false)
   const [code, setCode] = useState('')
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage')
@@ -1423,7 +1514,7 @@ function VouchersTab() {
               </div>
               <div className="flex items-center gap-2">
                 <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold', v.is_valid ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground')}>{v.is_valid ? 'Active' : 'Inactive'}</span>
-                <button onClick={() => deleteVoucher(v.id)} aria-label="Delete voucher" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
+                <button onClick={() => confirmDelete(`the voucher "${v.code}"`, () => deleteVoucher(v.id))} aria-label="Delete voucher" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
                   <Trash2 className="size-4" />
                 </button>
               </div>
@@ -1439,6 +1530,7 @@ function VouchersTab() {
 /* =============================== Testimonials =============================== */
 function TestimonialsTab() {
   const { testimonials } = useTestimonials()
+  const confirmDelete = useConfirmDelete()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState<Testimonial | null>(null)
   const [showNew, setShowNew] = useState(false)
@@ -1523,7 +1615,7 @@ function TestimonialsTab() {
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <UIButton size="sm" variant="outline" onClick={() => startEdit(t)}><Pencil className="size-3.5" /> Edit</UIButton>
-                  <button onClick={() => deleteTestimonial(t.id)} aria-label="Delete testimonial" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
+                  <button onClick={() => confirmDelete(`the testimonial from "${t.name}"`, () => deleteTestimonial(t.id))} aria-label="Delete testimonial" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
                     <Trash2 className="size-4" />
                   </button>
                 </div>
@@ -1540,6 +1632,7 @@ function TestimonialsTab() {
 /* =============================== Messages =============================== */
 function MessagesTab() {
   const { messages } = useMessages()
+  const confirmDelete = useConfirmDelete()
   const [selected, setSelected] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const filtered = filter === 'unread' ? messages.filter((m) => !m.read) : messages
@@ -1601,7 +1694,7 @@ function MessagesTab() {
                   <a href={`mailto:${m.email}?subject=Re: ${encodeURIComponent(m.subject)}`} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-background px-4 text-xs font-semibold uppercase tracking-[0.12em] transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:scale-105">
                     <Mail className="size-3.5" /> Reply via email
                   </a>
-                  <button onClick={() => { deleteMessage(m.id); setSelected(null) }} className="flex h-9 items-center gap-1.5 rounded-full border border-border px-4 text-xs font-semibold uppercase tracking-[0.12em] text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105">
+                  <button onClick={() => confirmDelete(`the message from "${m.name}"`, async () => { await deleteMessage(m.id); setSelected(null) })} className="flex h-9 items-center gap-1.5 rounded-full border border-border px-4 text-xs font-semibold uppercase tracking-[0.12em] text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105">
                     <Trash2 className="size-3.5" /> Delete
                   </button>
                 </div>
@@ -1618,6 +1711,7 @@ function MessagesTab() {
 /* =============================== Consultations =============================== */
 function ConsultationsTab() {
   const { slots } = useConsultationSlots()
+  const confirmDelete = useConfirmDelete()
   const { bookings } = useConsultationBookings()
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('')
@@ -1666,7 +1760,7 @@ function ConsultationsTab() {
                   <span>{slot.start_time?.slice(0,5)} – {slot.end_time?.slice(0,5)}</span>
                   {slot.is_booked && <UIBadge className="bg-amber-500/10 text-amber-700 border-amber-500/30">Booked{slot.booked_by_name ? ` by ${slot.booked_by_name}` : ''}</UIBadge>}
                 </div>
-                <button onClick={() => deleteConsultationSlot(slot.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="size-4" /></button>
+                <button onClick={() => confirmDelete('this consultation slot', () => deleteConsultationSlot(slot.id))} aria-label="Delete consultation slot" className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="size-4" /></button>
               </div>
             ))}
           </div>
@@ -1702,6 +1796,7 @@ type ContentSection = 'hero' | 'contact' | 'stats' | 'pillars' | 'certificates'
 
 function ContentTab() {
   const { settings } = useSiteSettings()
+  const confirmDelete = useConfirmDelete()
   const { pillars } = usePillars()
   const [draft, setDraft] = useState<SiteSettings | null>(null)
   const [saved, setSaved] = useState(false)
@@ -1991,7 +2086,7 @@ function ContentTab() {
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <UIButton size="sm" variant="outline" onClick={() => startEditPillar(p)}><Pencil className="size-3.5" /> Edit</UIButton>
-                    <button onClick={() => deletePillar(p.id)} aria-label="Delete pillar" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
+                    <button onClick={() => confirmDelete(`the pillar "${p.title}"`, () => deletePillar(p.id))} aria-label="Delete pillar" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
                       <Trash2 className="size-4" />
                     </button>
                   </div>
@@ -2014,6 +2109,7 @@ function ContentTab() {
 
 function CertificatesAdmin() {
   const { certificates } = useCertificates()
+  const confirmDelete = useConfirmDelete()
   const [title, setTitle] = useState('')
   const [error, setError] = useState('')
 
@@ -2061,7 +2157,8 @@ function CertificatesAdmin() {
               <img src={cert.image} alt={cert.title} className="aspect-[4/3] w-full rounded-lg object-contain" />
               <p className="mt-1.5 truncate text-xs font-medium">{cert.title}</p>
               <button
-                onClick={() => deleteCertificate(cert.id)}
+                onClick={() => confirmDelete(`the certificate "${cert.title}"`, () => deleteCertificate(cert.id))}
+                aria-label="Delete certificate"
                 className="absolute right-2 top-2 rounded-full bg-destructive/10 p-1 text-destructive hover:bg-destructive hover:text-white transition-colors"
               >
                 <Trash2 className="size-3.5" />
@@ -2089,13 +2186,14 @@ export function AdminPanel() {
         </div>
         <h1 className="font-heading text-2xl font-bold">Admins only</h1>
         <p className="text-muted-foreground max-w-sm">
-          Log in as <span className="font-semibold text-primary">admin@ascend.com</span> to access the control panel.
+          Log in with an administrator account to access the control panel.
         </p>
       </div>
     )
   }
 
   return (
+    <ConfirmDeleteProvider>
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col bg-sidebar p-6 pt-24 text-sidebar-foreground lg:flex">
@@ -2131,14 +2229,14 @@ export function AdminPanel() {
         <div className="mt-auto pt-6 border-t border-sidebar-border">
           <div className="rounded-xl bg-sidebar-accent p-3">
             <p className="text-xs font-semibold text-sidebar-foreground/70">Admin Mode Active</p>
-            <p className="mt-0.5 text-[11px] text-sidebar-foreground/40">All changes saved locally</p>
+            <p className="mt-0.5 text-[11px] text-sidebar-foreground/40">Changes are saved to the live site</p>
           </div>
         </div>
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col overflow-hidden">
         {/* Mobile tab strip */}
-        <div className="flex gap-1.5 overflow-x-auto px-4 pb-3 pt-20 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-1.5 overflow-x-auto px-4 pb-3 pt-4 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((t) => {
             const Icon = t.icon
             const isMsgs = t.label === 'Messages'
@@ -2178,5 +2276,6 @@ export function AdminPanel() {
         </main>
       </div>
     </div>
+    </ConfirmDeleteProvider>
   )
 }

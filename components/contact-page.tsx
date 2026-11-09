@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { motion } from 'motion/react'
 import { Mail, Phone, MapPin, Send, Check } from 'lucide-react'
 import { UIButton, UIInput, UICard, Eyebrow } from '@/components/ui-kit'
@@ -13,6 +13,7 @@ import { useT } from '@/lib/i18n'
 
 export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => void } = {}) {
   const t = useT()
+  const fid = useId()
   const { settings } = useSiteSettings()
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
@@ -25,9 +26,9 @@ export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => voi
   })
 
   const details = [
-    { icon: Mail, label: 'Email', value: settings?.contactEmail ?? '' },
-    { icon: Phone, label: 'Phone', value: settings?.contactPhone ?? '' },
-    { icon: MapPin, label: 'Location', value: settings?.contactLocation ?? '' },
+    { icon: Mail, label: t('contact.email'), value: settings?.contactEmail ?? '' },
+    { icon: Phone, label: t('contact.phone'), value: settings?.contactPhone ?? '' },
+    { icon: MapPin, label: t('contact.location'), value: settings?.contactLocation ?? '' },
   ]
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -65,12 +66,12 @@ export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => voi
           </p>
         </motion.div>
 
-        <div className="mt-14 grid gap-10 lg:grid-cols-[1fr_1.2fr]">
+        <div className="mt-10 grid gap-6 sm:mt-14 sm:gap-10 lg:grid-cols-[1fr_1.2fr]">
           <div className="space-y-4">
             {details.map((d) => {
               const Icon = d.icon
               return (
-                <UICard key={d.label} className="flex items-center gap-4 p-5">
+                <UICard key={d.label} className="flex items-center gap-4 p-4 sm:p-5">
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Icon className="size-5" />
                   </div>
@@ -78,14 +79,14 @@ export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => voi
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                       {d.label}
                     </p>
-                    <p className="mt-0.5 truncate font-medium">{d.value}</p>
+                    <p className="mt-0.5 font-medium break-words">{d.value}</p>
                   </div>
                 </UICard>
               )
             })}
           </div>
 
-          <UICard className="p-6 sm:p-8">
+          <UICard className="p-5 sm:p-8">
             {sent ? (
               <div className="flex h-full flex-col items-center justify-center py-12 text-center">
                 <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -100,11 +101,13 @@ export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => voi
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    <label htmlFor={`${fid}-0`} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                       {t('contact.name')}
                     </label>
-                    <UIInput
+                    <UIInput id={`${fid}-0`}
                       type="text"
+                      name="name"
+                      autoComplete="name"
                       placeholder={t('contact.placeholder.name')}
                       required
                       value={form.name}
@@ -112,11 +115,13 @@ export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => voi
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    <label htmlFor={`${fid}-1`} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                       {t('contact.email')}
                     </label>
-                    <UIInput
+                    <UIInput id={`${fid}-1`}
                       type="email"
+                      name="email"
+                      autoComplete="email"
                       placeholder={t('contact.placeholder.email')}
                       required
                       value={form.email}
@@ -125,10 +130,10 @@ export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => voi
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <label htmlFor={`${fid}-2`} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                     {t('contact.subject')}
                   </label>
-                  <UIInput
+                  <UIInput id={`${fid}-2`}
                     type="text"
                     placeholder={t('contact.placeholder.subject')}
                     required
@@ -137,16 +142,16 @@ export function ContactPage({ onNavigate }: { onNavigate?: (view: string) => voi
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <label htmlFor={`${fid}-3`} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                     {t('contact.message')}
                   </label>
-                  <textarea
+                  <textarea id={`${fid}-3`}
                     required
                     rows={5}
                     value={form.message}
                     onChange={set('message')}
                     placeholder={t('contact.placeholder.message')}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground sm:text-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   />
                 </div>
                 {error && (

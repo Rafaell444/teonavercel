@@ -11,8 +11,8 @@ class BookingSessionInline(admin.TabularInline):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ["user", "session", "num_sessions", "sessions_used", "format", "total", "status", "expires_at"]
-    list_filter = ["status", "format", "is_package"]
+    list_display = ["user", "session", "num_sessions", "sessions_used", "format", "session_language", "total", "status", "expires_at"]
+    list_filter = ["status", "format", "session_language", "is_package"]
     search_fields = ["user__email", "session__title"]
     inlines = [BookingSessionInline]
 

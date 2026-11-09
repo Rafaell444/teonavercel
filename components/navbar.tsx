@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   ChevronDown,
   Users,
@@ -13,7 +14,7 @@ import {
 import { UIButton } from '@/components/ui-kit'
 import { LocaleSwitcher } from '@/components/locale-switcher'
 import { useMe } from '@/lib/hooks/useAuth'
-import { useT } from '@/lib/i18n'
+import { useT, fmt } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 export type NavView =
@@ -66,7 +67,7 @@ export function Navbar({
 
   const linkClass = (active: boolean) =>
     cn(
-      'rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.14em] transition-all duration-200',
+      'whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.14em] transition-all duration-200',
       active
         ? 'bg-foreground text-background shadow-sm'
         : 'text-foreground/70 hover:bg-secondary hover:text-foreground hover:scale-[1.02]',
@@ -79,7 +80,7 @@ export function Navbar({
 
   return (
     <header className="fixed inset-x-0 top-4 z-50 px-4">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full border border-border bg-card/85 py-2 pl-5 pr-2 shadow-lg shadow-foreground/5 backdrop-blur-md">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 rounded-full border border-border bg-card/85 py-2 pl-4 pr-2 sm:gap-4 sm:pl-5 shadow-lg shadow-foreground/5 backdrop-blur-md">
         <button
           onClick={() => go('home')}
           className="font-heading text-xl font-bold tracking-tight transition-all duration-200 hover:opacity-80 hover:scale-[1.02]"
@@ -87,7 +88,7 @@ export function Navbar({
           Ascend<span className="text-primary">.</span>
         </button>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           <button className={linkClass(current === 'about')} onClick={() => onNavigate('about')}>
             {t('nav.about')}
           </button>
@@ -108,8 +109,15 @@ export function Navbar({
                 className={cn('size-3.5 transition-transform', sessionsOpen && 'rotate-180')}
               />
             </button>
+            <AnimatePresence>
             {sessionsOpen && (
-              <div className="absolute left-1/2 mt-2 w-60 -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-xl">
+              <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                  className="absolute left-1/2 mt-2 w-60 origin-top -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-xl"
+              >
                 <button
                   onClick={() => {
                     onNavigate('roundtable')
@@ -134,7 +142,7 @@ export function Navbar({
                 >
                   <UserRound className="mt-0.5 size-4 text-primary" />
                   <span>
-                    <span className="block text-sm font-semibold">{t('nav.sessions')}</span>
+                    <span className="block text-sm font-semibold">{t('nav.individual')}</span>
                     <span className="block text-xs text-muted-foreground">
                       {t('nav.individual.desc')}
                     </span>
@@ -155,8 +163,9 @@ export function Navbar({
                     </span>
                   </span>
                 </button>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
 
           <button className={linkClass(current === 'quiz')} onClick={() => onNavigate('quiz')}>
@@ -168,7 +177,7 @@ export function Navbar({
         </nav>
 
         {/* Auth / Profile */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <LocaleSwitcher />
           {!isAuthed ? (
             <>
@@ -176,6 +185,9 @@ export function Navbar({
                 variant="outline"
                 size="sm"
                 onClick={() => onAuth('login')}
+                // Very narrow phones: the bar only has room for logo, language and menu;
+                // Log in / Sign up are both in the mobile menu panel.
+                className="hidden min-[360px]:inline-flex"
               >
                 {t('nav.login')}
               </UIButton>
@@ -193,12 +205,21 @@ export function Navbar({
               >
                 {currentUser?.initials}
               </button>
+              <AnimatePresence>
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-xl">
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                  className="absolute right-0 mt-2 w-52 origin-top-right overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-xl"
+                >
                   <div className="px-3 py-2">
                     <p className="text-sm font-semibold">{currentUser?.name}</p>
                     <p className="text-xs text-muted-foreground capitalize">
-                      {currentUser?.role === 'admin' ? 'Administrator' : `${currentUser?.tier} tier`}
+                      {currentUser?.role === 'admin'
+                        ? t('nav.role.admin')
+                        : fmt(t('nav.tier'), { tier: currentUser?.tier ?? '' })}
                     </p>
                   </div>
                   <div className="my-1 h-px bg-border" />
@@ -222,17 +243,18 @@ export function Navbar({
                     <LogOut className="size-4" />
                     {t('nav.logout')}
                   </button>
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
           )}
 
           {/* Mobile menu toggle */}
           <button
             onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Menu"
+            aria-label={t('nav.menu')}
             aria-expanded={mobileOpen}
-            className="flex size-10 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary md:hidden"
+            className="flex size-10 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary lg:hidden"
           >
             {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -240,12 +262,19 @@ export function Navbar({
       </div>
 
       {/* Mobile dropdown panel */}
+      <AnimatePresence>
       {mobileOpen && (
-        <div className="mx-auto mt-2 max-w-5xl overflow-hidden rounded-3xl border border-border bg-card p-2 shadow-xl md:hidden">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          className="mx-auto mt-2 max-h-[calc(100dvh-6.5rem)] max-w-5xl overflow-y-auto rounded-3xl border border-border bg-card p-2 shadow-xl lg:hidden"
+        >
           {[
             { label: t('nav.about'), view: 'about' as NavView },
             { label: t('nav.groups'), view: 'roundtable' as NavView },
-            { label: t('nav.sessions'), view: 'booking' as NavView },
+            { label: t('nav.individual'), view: 'booking' as NavView },
             { label: t('nav.packages'), view: 'packages' as NavView },
             { label: t('nav.tests'), view: 'quiz' as NavView },
             { label: t('nav.contact'), view: 'contact' as NavView },
@@ -263,8 +292,34 @@ export function Navbar({
               {item.label}
             </button>
           ))}
-        </div>
+          {!isAuthed && (
+            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border p-2 pt-3 sm:hidden">
+              <UIButton
+                variant="outline"
+                size="sm"
+                className="w-full px-2"
+                onClick={() => {
+                  setMobileOpen(false)
+                  onAuth('login')
+                }}
+              >
+                {t('nav.login')}
+              </UIButton>
+              <UIButton
+                size="sm"
+                className="w-full px-2"
+                onClick={() => {
+                  setMobileOpen(false)
+                  onAuth('register')
+                }}
+              >
+                {t('nav.signup')}
+              </UIButton>
+            </div>
+          )}
+        </motion.div>
       )}
+      </AnimatePresence>
     </header>
   )
 }

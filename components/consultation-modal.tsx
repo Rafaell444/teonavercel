@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useId } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Calendar, Clock, Video, CheckCircle, Phone } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { UIButton, UICard } from '@/components/ui-kit'
@@ -8,7 +9,9 @@ import { useConsultationSlots, bookConsultation } from '@/lib/hooks/useConsultat
 import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { useT } from '@/lib/i18n'
+import { useT, useLocale } from '@/lib/i18n'
+import { formatDate } from '@/lib/format'
+import { useDialogFocus } from '@/lib/hooks/useDialogFocus'
 
 interface ConsultationModalProps {
   open: boolean
@@ -19,6 +22,7 @@ interface ConsultationModalProps {
 export function ConsultationModal({ open, onClose, onAuthRequired }: ConsultationModalProps) {
   const { user } = useMe()
   const t = useT()
+  const locale = useLocale()
   const { slots, isLoading } = useConsultationSlots()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
@@ -54,35 +58,58 @@ export function ConsultationModal({ open, onClose, onAuthRequired }: Consultatio
     }
   }
 
-  const handleClose = () => {
+  // Reset only after the closing animation, so the content does not change mid-fade
+  const resetState = () => {
     setSelectedDate(null)
     setSelectedSlot(null)
     setMeetLink(null)
     setError('')
-    onClose()
   }
 
-  if (!open) return null
+  const handleClose = onClose
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  // Rendered in a portal: a parent that is mid-animation (transform) would
+  // otherwise turn this fixed overlay into one positioned inside that parent.
+  const titleId = useId()
+  const panelRef = useDialogFocus<HTMLDivElement>(open)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  if (!mounted) return null
+
+  return createPortal(
+    <AnimatePresence onExitComplete={resetState}>
+      {open && (
+      <div key="consultation" className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           className="absolute inset-0 bg-foreground/60 backdrop-blur-sm"
           onClick={handleClose}
         />
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          exit={{ opacity: 0, scale: 0.97, y: 16, transition: { duration: 0.2, ease: 'easeIn' } }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="relative w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl"
+          ref={panelRef}
+          tabIndex={-1}
+          className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto outline-none overscroll-contain rounded-3xl border border-border bg-card p-5 shadow-2xl sm:p-6"
         >
           <button
             onClick={handleClose}
+            aria-label={t('common.close')}
             className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-secondary"
           >
             <X className="size-5" />
@@ -106,7 +133,7 @@ export function ConsultationModal({ open, onClose, onAuthRequired }: Consultatio
                   href={meetLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 block text-sm text-primary underline break-all"
+                  className="mt-1 block text-sm text-primary-ink underline break-all"
                 >
                   {meetLink}
                 </a>
@@ -117,8 +144,8 @@ export function ConsultationModal({ open, onClose, onAuthRequired }: Consultatio
             </div>
           ) : (
             <>
-              <div className="mb-5">
-                <h3 className="font-heading text-xl font-bold">{t('consultation.title')}</h3>
+              <div className="mb-5 pr-8">
+                <h3 id={titleId} className="font-heading text-xl font-bold">{t('consultation.title')}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {t('consultation.subtitle')}
                 </p>
@@ -142,6 +169,7 @@ export function ConsultationModal({ open, onClose, onAuthRequired }: Consultatio
                       {dates.map(date => (
                         <button
                           key={date}
+                          aria-pressed={selectedDate === date}
                           onClick={() => { setSelectedDate(date); setSelectedSlot(null) }}
                           className={cn(
                             'rounded-xl border px-3 py-2 text-sm font-medium transition-colors',
@@ -150,7 +178,7 @@ export function ConsultationModal({ open, onClose, onAuthRequired }: Consultatio
                               : 'border-border hover:bg-secondary'
                           )}
                         >
-                          {new Date(date + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })}
+                          {formatDate(date, locale, { year: false, weekday: true })}
                         </button>
                       ))}
                     </div>
@@ -165,6 +193,7 @@ export function ConsultationModal({ open, onClose, onAuthRequired }: Consultatio
                         {timesForDate.map(slot => (
                           <button
                             key={slot.id}
+                            aria-pressed={selectedSlot === slot.id}
                             onClick={() => setSelectedSlot(slot.id)}
                             className={cn(
                               'rounded-xl border px-3 py-2 text-sm font-medium transition-colors',
@@ -195,7 +224,9 @@ export function ConsultationModal({ open, onClose, onAuthRequired }: Consultatio
           )}
         </motion.div>
       </div>
-    </AnimatePresence>
+      )}
+    </AnimatePresence>,
+    document.body,
   )
 }
 
@@ -237,7 +268,7 @@ export function ConsultationCTA({ onAuthRequired }: { onAuthRequired?: () => voi
             variant="outline"
             size="sm"
             onClick={() => setOpen(true)}
-            className="shrink-0 whitespace-nowrap gap-1.5 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+            className="w-full shrink-0 whitespace-nowrap gap-1.5 border-primary/30 text-primary-ink hover:bg-primary hover:text-primary-foreground sm:w-auto"
           >
             <Phone className="size-3.5" />
             {t('consultation.cta_btn')}

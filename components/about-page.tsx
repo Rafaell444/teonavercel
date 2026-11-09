@@ -1,18 +1,25 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'motion/react'
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import Image from 'next/image'
 import { ArrowRight, X } from 'lucide-react'
 import { UIButton, Eyebrow } from '@/components/ui-kit'
 import { SiteFooter } from '@/components/site-footer'
-import { useCertificates } from '@/lib/hooks/useContent'
+import { useCertificates, useSiteSettings } from '@/lib/hooks/useContent'
 import { useT } from '@/lib/i18n'
 
 export function AboutPage({ onBook, onNavigate }: { onBook: () => void; onNavigate?: (view: string) => void }) {
   const t = useT()
+  const { settings } = useSiteSettings()
+  // Same figures as the home page, editable in the admin panel
+  const stats = [
+    { stat: settings?.statHours, label: t('about.stat.hours') },
+    { stat: settings?.statLives, label: t('about.stat.lives') },
+    { stat: settings?.statReturn, label: t('about.stat.return') },
+  ]
   return (
-    <div className="bg-background pt-32">
+    <div className="bg-background pt-24 sm:pt-32">
       <div className="mx-auto max-w-7xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -24,52 +31,40 @@ export function AboutPage({ onBook, onNavigate }: { onBook: () => void; onNaviga
           <h1 className="mt-4 font-heading text-4xl font-bold leading-[1.1] tracking-tight text-balance sm:text-6xl">
             {t('aboutPage.title')}
           </h1>
-          <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+          <p className="mt-6 text-base leading-relaxed text-muted-foreground sm:text-lg">
             {t('aboutPage.subtitle')}
           </p>
         </motion.div>
 
-        <div className="mt-16 grid items-center gap-14 lg:grid-cols-2">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl">
-            <Image src="/coach.png" alt="Portrait of the lead coach" fill className="object-cover" />
+        <div className="mt-12 grid items-center gap-10 sm:mt-16 sm:gap-14 lg:grid-cols-2">
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-3xl lg:max-w-none">
+            <Image src="/coach.webp" alt={t('about.image_alt')} fill className="object-cover" />
           </div>
           <div>
-            <Eyebrow>The Hunger</Eyebrow>
+            <Eyebrow>{t('about.eyebrow')}</Eyebrow>
             <h2 className="mt-3 font-heading text-3xl font-bold leading-tight tracking-tight text-balance sm:text-4xl">
-              I built this from the bottom of my own rock bottom.
+              {t('about.title')}
             </h2>
             <div className="mt-6 space-y-5 text-muted-foreground leading-relaxed">
-              <p>
-                Fifteen years ago I was burned out, broke, and convinced change
-                wasn&apos;t for people like me. One honest conversation cracked that
-                story open — and everything shifted.
-              </p>
-              <p>
-                Since then I&apos;ve spent over 20,000 hours in the room with founders,
-                leaders, and people simply ready for more. The mission is simple: help
-                you become the person your future is waiting for.
-              </p>
+              <p>{t('about.p1')}</p>
+              <p>{t('about.p2')}</p>
             </div>
-            <div className="mt-8 flex flex-wrap gap-8">
-              {[
-                { stat: '20k+', label: 'Coaching hours' },
-                { stat: '12k+', label: 'Lives changed' },
-                { stat: '98%', label: 'Would return' },
-              ].map((s) => (
+            <div className="mt-8 flex flex-wrap gap-x-8 gap-y-5">
+              {stats.map((s) => (
                 <div key={s.label}>
-                  <p className="font-heading text-4xl font-bold text-primary">{s.stat}</p>
+                  <p className="font-heading text-3xl font-bold text-primary sm:text-4xl">{s.stat}</p>
                   <p className="mt-1 text-sm text-muted-foreground">{s.label}</p>
                 </div>
               ))}
             </div>
-            <UIButton size="lg" onClick={onBook} className="mt-10">
-              Start your story
+            <UIButton size="lg" onClick={onBook} className="mt-10 w-full sm:w-auto">
+              {t('about.cta')}
               <ArrowRight className="size-4" />
             </UIButton>
           </div>
         </div>
 
-        <div className="mt-24 grid gap-6 md:grid-cols-3">
+        <div className="mt-16 grid gap-4 sm:mt-24 sm:gap-6 md:grid-cols-3">
           {[
             {
               title: t('aboutPage.values.depth'),
@@ -84,7 +79,7 @@ export function AboutPage({ onBook, onNavigate }: { onBook: () => void; onNaviga
               body: t('aboutPage.values.resultsBody'),
             },
           ].map((v) => (
-            <div key={v.title} className="rounded-2xl border border-border bg-card p-7">
+            <div key={v.title} className="rounded-2xl border border-border bg-card p-6 sm:p-7">
               <h3 className="font-heading text-xl font-bold tracking-tight">{v.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{v.body}</p>
             </div>
@@ -104,10 +99,20 @@ function CertificationsSection() {
   const { certificates } = useCertificates()
   const [viewImage, setViewImage] = useState<string | null>(null)
 
+  // Esc closes the enlarged certificate
+  useEffect(() => {
+    if (!viewImage) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setViewImage(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [viewImage])
+
   if (certificates.length === 0) return null
 
   return (
-    <div className="mt-24">
+    <div className="mt-16 sm:mt-24">
       <Eyebrow>{t('aboutPage.certs.eyebrow')}</Eyebrow>
       <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
         {t('aboutPage.certs.title')}
@@ -120,21 +125,39 @@ function CertificationsSection() {
             className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-card transition-all hover:shadow-lg"
           >
             <img src={cert.image} alt={cert.title} className="size-full object-contain p-3" />
-            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/80 to-transparent px-3 py-2 text-xs font-medium text-background opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/80 to-transparent px-3 py-2 text-xs font-medium text-background transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100">
               {cert.title}
             </span>
           </button>
         ))}
       </div>
 
+      <AnimatePresence>
       {viewImage && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/80 backdrop-blur-sm p-4" onClick={() => setViewImage(null)}>
-          <button className="absolute right-4 top-4 rounded-full bg-background/20 p-2 text-background hover:bg-background/30">
+        <motion.div
+          key="certificate"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/80 backdrop-blur-sm p-4"
+          onClick={() => setViewImage(null)}
+        >
+          <button autoFocus aria-label={t('common.close')} className="absolute right-4 top-4 flex size-11 items-center justify-center rounded-full bg-background/20 text-background hover:bg-background/30">
             <X className="size-5" />
           </button>
-          <img src={viewImage} alt="Certificate full view" className="max-h-[80vh] max-w-full rounded-2xl object-contain" />
-        </div>
+          <motion.img
+            src={viewImage}
+            alt="Certificate full view"
+            initial={{ scale: 0.94 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.96 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="max-h-[80dvh] max-w-full rounded-2xl object-contain"
+          />
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   )
 }

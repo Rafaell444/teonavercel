@@ -32,7 +32,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "id", "user", "user_name", "user_email",
             "session", "session_id", "session_title", "session_type",
             "num_sessions", "sessions_used",
-            "date", "time", "format",
+            "date", "time", "format", "session_language",
             "is_package", "package_duration_months",
             "total", "discount_amount", "voucher_code",
             "meet_link", "status", "is_expired",

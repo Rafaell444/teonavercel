@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { Navbar, type NavView } from '@/components/navbar'
 import { AuthModal } from '@/components/auth-modal'
 import { MarketingHome } from '@/components/marketing-home'
@@ -38,15 +39,24 @@ function AppShell() {
       setAuthMode('login')
       return
     }
+    if (v === view) {
+      // Already here (e.g. logo click on the home page): just glide to the top
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    // The old page fades out first; the scroll reset happens in onExitComplete
+    // below so the visitor never sees the outgoing page jump to the top.
     setView(v)
-    window.scrollTo({ top: 0 })
   }
 
   const handleAuthSuccess = () => {
     setAuthMode(null)
+    if (view === 'panel') return
     setView('panel')
-    window.scrollTo({ top: 0 })
   }
+
+  // Each view (and each pillar) is its own page for transition purposes
+  const pageKey = view === 'pillar-detail' ? `pillar-${selectedPillarId}` : view
 
   const handleLogout = async () => {
     await logoutFn()
@@ -63,6 +73,19 @@ function AppShell() {
         onLogout={handleLogout}
       />
 
+      {/* Opacity only: a transform here would break the fixed sticky bar inside pages */}
+      <AnimatePresence
+        mode="wait"
+        initial={false}
+        onExitComplete={() => window.scrollTo({ top: 0 })}
+      >
+      <motion.div
+        key={pageKey}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+      >
       {view === 'home' && (
         <MarketingHome
           onBook={() => navigate('booking')}
@@ -89,15 +112,20 @@ function AppShell() {
       {view === 'privacy' && <PrivacyPage onNavigate={(v) => navigate(v as NavView)} />}
       {view === 'terms' && <TermsPage onNavigate={(v) => navigate(v as NavView)} />}
       {view === 'cookies' && <CookiesPage onNavigate={(v) => navigate(v as NavView)} />}
+      </motion.div>
+      </AnimatePresence>
 
-      {authMode && (
-        <AuthModal
-          mode={authMode}
-          onClose={() => setAuthMode(null)}
-          onSuccess={handleAuthSuccess}
-          onSwitch={(mode) => setAuthMode(mode)}
-        />
-      )}
+      <AnimatePresence>
+        {authMode && (
+          <AuthModal
+            key="auth"
+            mode={authMode}
+            onClose={() => setAuthMode(null)}
+            onSuccess={handleAuthSuccess}
+            onSwitch={(mode) => setAuthMode(mode)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -106,7 +134,10 @@ export default function Page() {
   return (
     <I18nProvider>
       <SWRConfig value={{ revalidateOnFocus: false }}>
-        <AppShell />
+        {/* Honour the device's "reduce motion" setting across every animation */}
+        <MotionConfig reducedMotion="user">
+          <AppShell />
+        </MotionConfig>
       </SWRConfig>
     </I18nProvider>
   )

@@ -30,6 +30,8 @@ export interface Booking {
   date: string
   time: string
   format: 'online' | 'offline'
+  /** Language the client asked for. Missing on bookings made before this field existed. */
+  session_language?: 'ka' | 'en'
   is_package: boolean
   package_duration_months: number | null
   total: number
@@ -49,6 +51,7 @@ export interface CreateBookingPayload {
   date?: string
   time?: string
   format: 'online' | 'offline'
+  session_language?: 'ka' | 'en'
   num_sessions: number
   is_package?: boolean
   package_duration_months?: number

@@ -5,9 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-playfair), Georgia, serif;
-  --font-serif: var(--font-playfair), Georgia, serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* The Georgian fonts come second: Latin letters use Playfair/Inter, Georgian
+     letters (which those two do not contain) use the Noto Georgian pair. */
+  --font-heading: var(--font-playfair), var(--font-georgian-serif), Georgia, serif;
+  --font-serif: var(--font-playfair), var(--font-georgian-serif), Georgia, serif;
+  --font-sans: var(--font-inter), var(--font-georgian-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), 'Geist Mono Fallback';
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -34,6 +36,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -60,6 +63,10 @@
   /* Energetic orange #f5a623 */
   --primary: oklch(0.76 0.16 65);
   --primary-foreground: oklch(0.16 0.01 60);
+  /* Orange for SMALL TEXT on light surfaces. The brand orange above is only
+     about 2:1 against the cream background, too faint for small labels and
+     links; this darker shade is about 5:1. Use `text-primary-ink` for those. */
+  --primary-ink: oklch(0.53 0.14 52);
   --secondary: oklch(0.94 0.004 90);
   --secondary-foreground: oklch(0.2 0.004 60);
   --muted: oklch(0.94 0.004 90);
@@ -95,6 +102,7 @@
   --popover-foreground: oklch(0.96 0.004 90);
   --primary: oklch(0.76 0.16 65);
   --primary-foreground: oklch(0.16 0.01 60);
+  --primary-ink: var(--primary);
   --secondary: oklch(0.26 0.006 60);
   --secondary-foreground: oklch(0.96 0.004 90);
   --muted: oklch(0.26 0.006 60);
@@ -126,9 +134,36 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Safety net: a stray wide element (long CMS word, slide-in animation) can
+       never give the page a horizontal scrollbar. `clip` keeps sticky/fixed working. */
+    overflow-x: clip;
   }
   html {
     @apply font-sans;
+  }
+  /* On dark surfaces the bright brand orange already has plenty of contrast,
+     so "ink" orange switches back to it there. */
+  .bg-foreground,
+  .bg-sidebar {
+    --primary-ink: var(--primary);
+  }
+}
+
+/* Visitors who ask their device for less motion get instant state changes.
+   (Motion-library animations are handled by <MotionConfig reducedMotion="user">.) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Loading spinners still need to spin to read as "loading" */
+  .animate-spin {
+    animation-duration: 1s !important;
+    animation-iteration-count: infinite !important;
   }
 }
 
