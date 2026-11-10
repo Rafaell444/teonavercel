@@ -4,12 +4,12 @@
 
 export type Tier = 'Explorer' | 'Achiever' | 'Master' | 'Luminary'
 
-/** XP needed to reach each membership tier. */
+/** XP needed to reach each membership tier (must match tierForXp on the server). */
 export const tiers: { name: Tier; xp: number }[] = [
   { name: 'Explorer', xp: 0 },
-  { name: 'Achiever', xp: 1500 },
-  { name: 'Master', xp: 4000 },
-  { name: 'Luminary', xp: 8000 },
+  { name: 'Achiever', xp: 1000 },
+  { name: 'Master', xp: 5000 },
+  { name: 'Luminary', xp: 10000 },
 ]
 
 export const footerCompanyLinks: { label: string; view: string }[] = [

@@ -38,7 +38,7 @@ import { useTests, createTest, updateTest, deleteTest, COURSE_OPTIONS, type Test
 import { useVault, uploadVaultItem, deleteVaultItem } from '@/lib/hooks/useVault'
 import { useBookings, updateBookingStatus } from '@/lib/hooks/useBookings'
 import { useEvents, createEvent, updateEvent, deleteEvent } from '@/lib/hooks/useEvents'
-import { useSessions, createSession, updateSession, deleteSession, useTimeSlots, createTimeSlot, createTimeSlotssBulk, updateTimeSlot, deleteTimeSlot, useGroupSchedules, createGroupSchedule, usePackages, createPackage, updatePackage, deletePackage } from '@/lib/hooks/useSessions'
+import { useSessions, createSession, updateSession, deleteSession, useTimeSlots, createTimeSlot, createTimeSlotssBulk, updateTimeSlot, deleteTimeSlot, useGroupSchedules, createGroupSchedule, deleteGroupSchedule, usePackages, createPackage, updatePackage, deletePackage } from '@/lib/hooks/useSessions'
 import type { Session, SessionTimeSlot as TimeSlotType, GroupSessionSchedule, Package } from '@/lib/hooks/useSessions'
 import { useVouchers, createVoucher, updateVoucher, deleteVoucher } from '@/lib/hooks/useVouchers'
 import type { Voucher } from '@/lib/hooks/useVouchers'
@@ -368,7 +368,9 @@ function emptyQuestion(): TestQuestion {
 
 function generateCombinations(questions: TestQuestion[]): string[] {
   if (questions.length === 0) return []
-  const optionCounts = questions.map((q) => q.options.length)
+  // Blank options are dropped on save, so they must not produce combinations either
+  const optionCounts = questions.map((q) => q.options.filter((o) => o.trim()).length)
+  if (optionCounts.some((n) => n === 0)) return []
   const results: string[] = []
   const indices = Array(questions.length).fill(0)
 
@@ -638,6 +640,7 @@ function VaultTab() {
     try {
       await uploadVaultItem(fd)
       setTitle('')
+      setKind('PDF · 1 page')
       setFile(null)
     } catch (err) {
       setVaultError(getErrorMessage(err))
@@ -737,11 +740,12 @@ function BookingsTab() {
             <div>
               <p className="font-semibold">{b.session_title}</p>
               <p className="text-sm text-muted-foreground">
-                {b.user_name} · {b.num_sessions} sessions · {b.format === 'online' ? 'Online' : 'In-Person'}
+                {b.user_name} · {b.num_sessions} session{b.num_sessions === 1 ? '' : 's'} · {b.format === 'online' ? 'Online' : 'In-Person'}
                 {b.is_package && ' · Package'}
                 {b.session_language && ` · ${b.session_language === 'en' ? 'English' : 'Georgian'}`}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
+                {b.date && `${b.date}${b.time ? ` · ${b.time.slice(0, 5)}` : ''} · `}
                 Used: {b.sessions_used}/{b.num_sessions}
                 {b.expires_at && ` · Expires: ${new Date(b.expires_at).toLocaleDateString()}`}
                 {b.is_expired && ' · EXPIRED'}
@@ -1221,6 +1225,7 @@ function IndividualAvailabilityPanel({ sessionId }: { sessionId: string }) {
 
 function SessionCard({ session: s, sessionType, onDelete }: { session: Session, sessionType: 'group' | 'individual', onDelete: () => void }) {
   const [showScheduleForm, setShowScheduleForm] = useState(false)
+  const [schedError, setSchedError] = useState('')
   const [showAvailability, setShowAvailability] = useState(false)
   const [schedDate, setSchedDate] = useState('')
   const [schedTime, setSchedTime] = useState('')
@@ -1241,8 +1246,9 @@ function SessionCard({ session: s, sessionType, onDelete }: { session: Session, 
       } as any)
       setShowScheduleForm(false)
       setSchedDate(''); setSchedTime(''); setSchedLocation(''); setSchedMaps('')
-    } catch (e) { /* silently handle */ }
+    } catch (e) { setSchedError(getErrorMessage(e)) }
   }
+  const confirmDeleteSchedule = useConfirmDelete()
 
   return (
     <UICard className="p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-sm">
@@ -1280,8 +1286,18 @@ function SessionCard({ session: s, sessionType, onDelete }: { session: Session, 
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground mb-2">Scheduled dates</p>
           <div className="flex flex-wrap gap-2">
             {schedules.map(sch => (
-              <span key={sch.id} className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-xs font-medium">
+              <span key={sch.id} className="inline-flex items-center gap-1.5 rounded-full bg-secondary py-1 pl-3 pr-1 text-xs font-medium">
                 {sch.date} · {sch.start_time?.slice(0, 5)} · {sch.format} · {sch.seats_taken}/{sch.seats_total} seats
+                <button
+                  type="button"
+                  aria-label="Delete schedule"
+                  title={sch.seats_taken > 0 ? 'Seats are already taken for this date' : 'Delete this date'}
+                  disabled={sch.seats_taken > 0}
+                  onClick={() => confirmDeleteSchedule(`the group date ${sch.date} ${sch.start_time?.slice(0, 5)}`, () => deleteGroupSchedule(s.id, sch.id))}
+                  className="flex size-5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                >
+                  <X className="size-3" />
+                </button>
               </span>
             ))}
           </div>
@@ -1295,6 +1311,7 @@ function SessionCard({ session: s, sessionType, onDelete }: { session: Session, 
       {showScheduleForm && (
         <div className="mt-3 border-t border-border pt-3 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Add schedule (auto-creates {s.max_seats} seats)</p>
+          {schedError && <p className="text-sm text-destructive">{schedError}</p>}
           <div className="grid gap-2 sm:grid-cols-2">
             <UIInput type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} />
             <UIInput type="time" value={schedTime} onChange={(e) => setSchedTime(e.target.value)} />
@@ -1513,7 +1530,14 @@ function VouchersTab() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold', v.is_valid ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground')}>{v.is_valid ? 'Active' : 'Inactive'}</span>
+                <button
+                  type="button"
+                  onClick={() => updateVoucher(v.id, { is_active: !v.is_active })}
+                  title={v.is_active ? 'Click to deactivate' : 'Click to activate'}
+                  className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors', v.is_active && v.is_valid ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-secondary text-muted-foreground hover:bg-secondary/70')}
+                >
+                  {!v.is_active ? 'Inactive' : v.is_valid ? 'Active' : 'Expired'}
+                </button>
                 <button onClick={() => confirmDelete(`the voucher "${v.code}"`, () => deleteVoucher(v.id))} aria-label="Delete voucher" className="flex size-9 items-center justify-center rounded-full border border-border text-destructive transition-all duration-200 hover:bg-destructive hover:text-white hover:border-destructive hover:scale-105 active:scale-95">
                   <Trash2 className="size-4" />
                 </button>
@@ -1824,13 +1848,75 @@ function ContentTab() {
     setContentError('')
     try {
       if (!pillarDraft) return
-      await updatePillar(pillarDraft.id, pillarDraft)
+      if (pillarDraft.id) {
+        await updatePillar(pillarDraft.id, pillarDraft)
+      } else {
+        const { id: _id, ...body } = pillarDraft
+        const nextOrder = pillars.reduce((max, p) => Math.max(max, p.order ?? 0), 0) + 1
+        await createPillar({ ...body, points: body.points.filter(Boolean), order: nextOrder })
+      }
       setEditingPillarId(null)
       setPillarDraft(null)
     } catch (err) {
       setContentError(getErrorMessage(err))
     }
   }
+
+  // Shared editor for a new pillar (id '') and for editing an existing one
+  const pillarForm = pillarDraft ? (
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Title</label>
+          <UIInput value={pillarDraft.title} onChange={(e) => setPillarDraft({ ...pillarDraft, title: e.target.value })} placeholder="Executive Coaching" />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Blurb</label>
+          <UIInput value={pillarDraft.blurb} onChange={(e) => setPillarDraft({ ...pillarDraft, blurb: e.target.value })} placeholder="Short description…" />
+        </div>
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Bullet points (one per line)</label>
+        <textarea rows={3} value={pillarDraft.points.join('\n')} onChange={(e) => setPillarDraft({ ...pillarDraft, points: e.target.value.split('\n') })} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Long Description (detail page)</label>
+        <textarea rows={4} value={pillarDraft.long_description ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, long_description: e.target.value })} placeholder="Detailed description shown on the pillar detail page..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">History / Background</label>
+        <textarea rows={3} value={pillarDraft.history ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, history: e.target.value })} placeholder="Background and history of this practice..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+      </div>
+      <hr className="border-border" />
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Georgian translations (KA)</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Title (KA)</label>
+          <UIInput value={pillarDraft.title_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, title_ka: e.target.value })} placeholder="სათაური ქართულად" />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Blurb (KA)</label>
+          <UIInput value={pillarDraft.blurb_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, blurb_ka: e.target.value })} placeholder="მოკლე აღწერა…" />
+        </div>
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Bullet points KA (one per line)</label>
+        <textarea rows={3} value={(pillarDraft.points_ka || []).join('\n')} onChange={(e) => setPillarDraft({ ...pillarDraft, points_ka: e.target.value.split('\n') })} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Long Description KA</label>
+        <textarea rows={4} value={pillarDraft.long_description_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, long_description_ka: e.target.value })} placeholder="დეტალური აღწერა ქართულად..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">History KA</label>
+        <textarea rows={3} value={pillarDraft.history_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, history_ka: e.target.value })} placeholder="ისტორია ქართულად..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
+      </div>
+      <div className="flex gap-2">
+        <UIButton size="sm" onClick={savePillarEdit}><Check className="size-3.5" /> Save</UIButton>
+        <UIButton size="sm" variant="outline" onClick={() => setEditingPillarId(null)}>Cancel</UIButton>
+      </div>
+    </div>
+  ) : null
 
   const sections: { key: ContentSection; label: string; icon: typeof Globe }[] = [
     { key: 'hero', label: 'Hero Section', icon: Sparkles },
@@ -2017,61 +2103,16 @@ function ContentTab() {
               <Plus className="size-4" /> Add pillar
             </UIButton>
           </div>
+          {editingPillarId === '' && pillarDraft && (
+            <UICard className="p-5 border-primary/40">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-primary">New pillar</p>
+              {pillarForm}
+            </UICard>
+          )}
           {pillars.map((p, i) => (
             <UICard key={p.id} className="p-5 transition-all duration-200 hover:border-primary/30 hover:shadow-sm">
               {editingPillarId === p.id && pillarDraft ? (
-                <div className="space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Title</label>
-                      <UIInput value={pillarDraft.title} onChange={(e) => setPillarDraft({ ...pillarDraft, title: e.target.value })} placeholder="Executive Coaching" />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Blurb</label>
-                      <UIInput value={pillarDraft.blurb} onChange={(e) => setPillarDraft({ ...pillarDraft, blurb: e.target.value })} placeholder="Short description…" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Bullet points (one per line)</label>
-                    <textarea rows={3} value={pillarDraft.points.join('\n')} onChange={(e) => setPillarDraft({ ...pillarDraft, points: e.target.value.split('\n') })} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Long Description (detail page)</label>
-                    <textarea rows={4} value={pillarDraft.long_description ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, long_description: e.target.value })} placeholder="Detailed description shown on the pillar detail page..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">History / Background</label>
-                    <textarea rows={3} value={pillarDraft.history ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, history: e.target.value })} placeholder="Background and history of this practice..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
-                  </div>
-                  <hr className="border-border" />
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Georgian translations (KA)</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Title (KA)</label>
-                      <UIInput value={pillarDraft.title_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, title_ka: e.target.value })} placeholder="სათაური ქართულად" />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Blurb (KA)</label>
-                      <UIInput value={pillarDraft.blurb_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, blurb_ka: e.target.value })} placeholder="მოკლე აღწერა…" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Bullet points KA (one per line)</label>
-                    <textarea rows={3} value={(pillarDraft.points_ka || []).join('\n')} onChange={(e) => setPillarDraft({ ...pillarDraft, points_ka: e.target.value.split('\n') })} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Long Description KA</label>
-                    <textarea rows={4} value={pillarDraft.long_description_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, long_description_ka: e.target.value })} placeholder="დეტალური აღწერა ქართულად..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">History KA</label>
-                    <textarea rows={3} value={pillarDraft.history_ka ?? ''} onChange={(e) => setPillarDraft({ ...pillarDraft, history_ka: e.target.value })} placeholder="ისტორია ქართულად..." className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" />
-                  </div>
-                  <div className="flex gap-2">
-                    <UIButton size="sm" onClick={savePillarEdit}><Check className="size-3.5" /> Save</UIButton>
-                    <UIButton size="sm" variant="outline" onClick={() => setEditingPillarId(null)}>Cancel</UIButton>
-                  </div>
-                </div>
+                pillarForm
               ) : (
                 <div className="flex items-start justify-between gap-3">
                   <div>

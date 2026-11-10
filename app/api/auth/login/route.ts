@@ -1,34 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import { login, setAuthCookies } from '@/lib/server/auth'
+import { handle, json, parseBody } from '@/lib/server/http'
 
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const upstream = await fetch(`${API_URL}/api/auth/login/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+const schema = z.object({
+  email: z.string().trim().min(1, 'Email is required.'),
+  password: z.string().min(1, 'Password is required.'),
+})
 
-  const data = await upstream.json()
-  if (!upstream.ok) {
-    return NextResponse.json(data, { status: upstream.status })
-  }
-
-  const response = NextResponse.json({ user: data.user, access: data.access })
-  response.cookies.set('access_token', data.access, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60,
-  })
-  response.cookies.set('refresh_token', data.refresh, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30,
-  })
-  return response
-}
+export const POST = handle(async (req) => {
+  const { email, password } = await parseBody(req, schema)
+  const session = await login(email, password)
+  await setAuthCookies(session)
+  return json({ user: session.user, access: session.access })
+})

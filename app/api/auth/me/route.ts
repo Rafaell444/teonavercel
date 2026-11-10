@@ -1,37 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import { requireUser, updateProfile } from '@/lib/server/auth'
+import { HttpError, handle, json, parseBody } from '@/lib/server/http'
+import { email } from '@/lib/server/validation'
 
-export async function GET(req: NextRequest) {
-  const accessToken = req.cookies.get('access_token')?.value
-  if (!accessToken) {
-    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 })
+export const GET = handle(async (req) => {
+  const user = await requireUser(req)
+  return json(user)
+})
+
+const patchSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+  email: email.optional(),
+})
+
+export const PATCH = handle(async (req) => {
+  const user = await requireUser(req)
+  const body = await parseBody(req, patchSchema)
+  try {
+    const updated = await updateProfile(user.id, body)
+    return json(updated)
+  } catch (err) {
+    if ((err as { code?: string }).code === 'auth/email-already-exists') {
+      throw new HttpError(400, { email: ['A user with this email already exists.'] })
+    }
+    throw err
   }
-
-  const upstream = await fetch(`${API_URL}/api/auth/me/`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
-
-  const data = await upstream.json()
-  return NextResponse.json(data, { status: upstream.status })
-}
-
-export async function PATCH(req: NextRequest) {
-  const accessToken = req.cookies.get('access_token')?.value
-  if (!accessToken) {
-    return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 })
-  }
-
-  const body = await req.json()
-  const upstream = await fetch(`${API_URL}/api/auth/me/`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(body),
-  })
-
-  const data = await upstream.json()
-  return NextResponse.json(data, { status: upstream.status })
-}
+})

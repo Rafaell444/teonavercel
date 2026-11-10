@@ -11,6 +11,7 @@ import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useT, useLocalized, useLocale, fmt } from '@/lib/i18n'
+import { paymentsEnabled } from '@/lib/config'
 import { formatDate, formatTime } from '@/lib/format'
 
 function useCountUp(target: number, duration = 1200) {
@@ -165,7 +166,7 @@ export default function RoundTable() {
             <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-primary/10">
               <Check className="size-6 text-primary" />
             </div>
-            <h3 className="font-heading text-lg font-bold">{t('groups.confirmed_title')}</h3>
+            <h3 className="font-heading text-lg font-bold">{t(paymentsEnabled ? 'groups.confirmed_title' : 'groups.requested_title')}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               {fmt(t('groups.seat_n'), { n: purchaseResult.seat.seat_number })} · {purchaseResult.booking.session_title}
             </p>
@@ -258,14 +259,14 @@ export default function RoundTable() {
               <div className="flex justify-between gap-4"><span className="text-muted-foreground">{t('booking.step.format')}</span><span>{activeSchedule.format === 'online' ? t('booking.online') : t('format.in_person')}</span></div>
               <hr className="border-border" />
               <div className="flex justify-between font-semibold">
-                <span>{t('booking.total')}</span>
+                <span>{t(paymentsEnabled ? 'booking.total' : 'groups.price')}</span>
                 <span className="font-heading text-xl text-primary">${activeSession.price}</span>
               </div>
             </div>
             <UIButton className="mt-5 w-full" onClick={handleConfirmPurchase} disabled={purchasing}>
-              {purchasing ? t('groups.processing') : t('groups.confirm_pay')}
+              {purchasing ? t('groups.processing') : t(paymentsEnabled ? 'groups.confirm_pay' : 'groups.reserve')}
             </UIButton>
-            <p className="mt-2 text-center text-xs text-muted-foreground">{t('groups.payment_note')}</p>
+            <p className="mt-2 text-center text-xs text-muted-foreground">{t(paymentsEnabled ? 'groups.payment_note' : 'groups.request_note')}</p>
           </UICard>
         )}
 
@@ -273,7 +274,7 @@ export default function RoundTable() {
         <UICard className="mt-8 mx-auto max-w-md p-5 text-center">
           {mySeat ? (
             <>
-              <p className="text-sm font-medium">{fmt(t('groups.seat_n'), { n: mySeat.seat_number })} — {t('groups.seat_confirmed')}</p>
+              <p className="text-sm font-medium">{fmt(t('groups.seat_n'), { n: mySeat.seat_number })} — {t(paymentsEnabled ? 'groups.seat_confirmed' : 'groups.seat_reserved')}</p>
             </>
           ) : (
             <>

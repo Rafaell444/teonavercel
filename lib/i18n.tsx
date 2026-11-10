@@ -262,6 +262,16 @@ const translations: Record<string, Record<Locale, string>> = {
   'booking.done.again': { ka: 'კიდევ ერთის დაჯავშნა', en: 'Book another' },
   'booking.login_required': { ka: 'ჯავშნის დასადასტურებლად გთხოვ, ჯერ შედი ანგარიშზე.', en: 'Please log in to confirm your booking.' },
   'booking.prev_month': { ka: 'წინა თვე', en: 'Previous month' },
+  // Request-and-confirm flow (payments switched off)
+  'booking.request': { ka: 'მოთხოვნის გაგზავნა', en: 'Send booking request' },
+  'booking.requesting': { ka: 'იგზავნება…', en: 'Sending…' },
+  'booking.request.note': { ka: 'ონლაინ გადახდა არ არის საჭირო. კოუჩი დაგიკავშირდება ჯავშნის დასადასტურებლად და გადახდის შესათანხმებლად.', en: 'No online payment is needed. The coach will contact you to confirm the booking and arrange payment.' },
+  'booking.done.request_title': { ka: 'მოთხოვნა გაგზავნილია!', en: 'Request sent!' },
+  'booking.done.request_body': { ka: 'შენი არჩეული დრო დაჯავშნილია. კოუჩი მალე დაგიკავშირდება ჯავშნის დასადასტურებლად და გადახდის დეტალების შესათანხმებლად.', en: 'Your chosen time is held for you. The coach will contact you shortly to confirm the booking and arrange payment.' },
+  'groups.reserve': { ka: 'ადგილის დაჯავშნა', en: 'Reserve seat' },
+  'groups.requested_title': { ka: 'ადგილი შენახულია!', en: 'Seat reserved!' },
+  'groups.request_note': { ka: 'ადგილი შენთვისაა შენახული. კოუჩი დაადასტურებს ჯავშანს და შეგითანხმებს გადახდას.', en: 'The seat is held for you. The coach will confirm the booking and arrange payment with you.' },
+  'groups.price': { ka: 'ფასი', en: 'Price' },
   'booking.next_month': { ka: 'შემდეგი თვე', en: 'Next month' },
 
   // Group sessions
@@ -372,6 +382,16 @@ const translations: Record<string, Record<Locale, string>> = {
   'dash.schedule.sessions': { ka: 'სესიები', en: 'Sessions' },
   'dash.schedule.not_scheduled': { ka: 'არ არის დაგეგმილი', en: 'Not scheduled' },
   'dash.schedule.meet': { ka: 'Meet-ის ბმული', en: 'Meet link' },
+  // Scheduling sessions 2..n of a multi-session booking from the dashboard
+  'dash.schedule.schedule_next': { ka: 'შემდეგი სესიის დაგეგმვა', en: 'Schedule next session' },
+  'dash.schedule.close': { ka: 'დახურვა', en: 'Close' },
+  'dash.schedule.pick_date': { ka: 'აირჩიე თარიღი', en: 'Pick a date' },
+  'dash.schedule.pick_time': { ka: 'აირჩიე დრო', en: 'Pick a time' },
+  'dash.schedule.no_slots': { ka: 'ამ სესიისთვის თავისუფალი დრო ჯერ არ არის. სცადე მოგვიანებით.', en: 'No free times for this session yet. Please check back later.' },
+  'dash.schedule.confirm_next': { ka: 'დაგეგმვა', en: 'Schedule' },
+  'dash.schedule.scheduling': { ka: 'იგეგმება…', en: 'Scheduling…' },
+  'dash.schedule.pending_hint': { ka: 'შემდეგი სესიების დაგეგმვა შესაძლებელი იქნება, როცა კოუჩი ჯავშანს დაადასტურებს', en: 'You can schedule the next sessions once the coach confirms the booking' },
+  'groups.seat_reserved': { ka: 'დაჯავშნილია', en: 'reserved' },
   'dash.vault.eyebrow': { ka: 'მხოლოდ წევრებისთვის', en: 'Members Only' },
   'dash.vault.title': { ka: 'პირადი საცავი', en: 'Private vault' },
   'dash.vault.assigned': { ka: 'შენთვის მინიჭებული', en: 'Assigned to you' },

@@ -12,6 +12,7 @@ import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useT, useLocalized, useLocale, fmt } from '@/lib/i18n'
+import { paymentsEnabled } from '@/lib/config'
 import { WEEKDAY_LABELS, formatDate, monthYearLabel } from '@/lib/format'
 
 
@@ -129,9 +130,9 @@ export default function PackageBooking() {
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-6 flex size-20 items-center justify-center rounded-full bg-primary/10">
           <Check className="size-9 text-primary" />
         </motion.div>
-        <h2 className="font-heading text-3xl font-bold">{t('packages.done.title')}</h2>
+        <h2 className="font-heading text-3xl font-bold">{t(paymentsEnabled ? 'packages.done.title' : 'booking.done.request_title')}</h2>
         <p className="mt-3 max-w-md text-muted-foreground">
-          {t('packages.done.body')}
+          {t(paymentsEnabled ? 'packages.done.body' : 'booking.done.request_body')}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">{fmt(t('packages.done.duration'), { n: selectedPkg?.duration_months ?? '' })}</p>
         <UIButton className="mt-8" onClick={() => { setDone(false); setSelectedPkg(null); setDate(null); setTime('') }}>
@@ -240,7 +241,7 @@ export default function PackageBooking() {
             </UICard>
 
             <UIButton className="w-full" onClick={confirm} disabled={confirming || !date || !time || !currentUser}>
-              {confirming ? t('booking.booking') : t('booking.confirm_pay')} <Check className="size-4" />
+              {confirming ? t(paymentsEnabled ? 'booking.booking' : 'booking.requesting') : t(paymentsEnabled ? 'booking.confirm_pay' : 'booking.request')} <Check className="size-4" />
             </UIButton>
           </div>
         )}

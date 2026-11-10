@@ -1,3 +1,6 @@
 allowBuilds:
   msw: true
   sharp: true
+  esbuild: true
+  "@firebase/util": true
+  protobufjs: true

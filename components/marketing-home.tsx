@@ -79,14 +79,17 @@ function Hero({ onBook, onQuiz }: { onBook: () => void; onQuiz: () => void }) {
         transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
         className="absolute inset-0"
       >
-        <Image
-          src={settings?.heroImage ?? '/hero.webp'}
-          alt={t('hero.image_alt')}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-60"
-        />
+        {/* Wait for the settings so the image is not swapped once they arrive */}
+        {settings && (
+          <Image
+            src={settings.heroImage ?? '/hero.webp'}
+            alt={t('hero.image_alt')}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-60"
+          />
+        )}
       </motion.div>
       <div className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/70 to-foreground/30" />
       <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-12 pt-28">

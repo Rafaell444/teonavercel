@@ -83,10 +83,13 @@ export async function bootstrapAccessToken(): Promise<string | null> {
 }
 
 export async function apiFetch<T = unknown>(
-  path: string,
+  rawPath: string,
   options: RequestInit & { skipAuth?: boolean } = {},
 ): Promise<T> {
   const { skipAuth, ...fetchOpts } = options
+  // The hooks still use the old backend's trailing-slash paths ('/api/sessions/');
+  // the Next.js API routes are the same paths without the slash.
+  const path = rawPath.replace(/\/+(\?|$)/, '$1')
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

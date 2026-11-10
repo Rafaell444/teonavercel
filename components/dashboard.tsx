@@ -26,7 +26,8 @@ import {
 import { UIButton, UICard, UIInput, Eyebrow, UIBadge } from '@/components/ui-kit'
 import { tiers, growthMilestones } from '@/lib/mock-data'
 import { useMe } from '@/lib/hooks/useAuth'
-import { useBookings } from '@/lib/hooks/useBookings'
+import { useBookings, scheduleNextSession, type Booking } from '@/lib/hooks/useBookings'
+import { useTimeSlots } from '@/lib/hooks/useSessions'
 import { useVault } from '@/lib/hooks/useVault'
 import { useTests } from '@/lib/hooks/useTests'
 import { useDiary, addDiaryEntry } from '@/lib/hooks/useDiary'
@@ -361,6 +362,8 @@ function ScheduleTab({ onBook }: { onBook: () => void }) {
   const { bookings: myBookings } = useBookings()
   const tr = useT()
   const locale = useLocale()
+  // Booking whose next-session picker is open
+  const [schedulingId, setSchedulingId] = useState<string | null>(null)
   // Statuses come from the server in English; fall back to the raw value if one is new
   const statusLabel = (status: string) => {
     const key = `status.${status}`
@@ -436,11 +439,19 @@ function ScheduleTab({ onBook }: { onBook: () => void }) {
                   >
                     {statusLabel(s.status)}
                   </span>
-                  {needsScheduling && (
-                    <span className="text-xs text-primary-ink font-medium">{tr('dash.schedule.next_hint')}</span>
+                  {needsScheduling && s.status === 'Confirmed' && (
+                    <UIButton size="sm" variant={schedulingId === s.id ? 'outline' : 'primary'} onClick={() => setSchedulingId(schedulingId === s.id ? null : s.id)}>
+                      <CalendarPlus className="size-3.5" /> {tr(schedulingId === s.id ? 'dash.schedule.close' : 'dash.schedule.schedule_next')}
+                    </UIButton>
+                  )}
+                  {needsScheduling && s.status === 'Pending' && (
+                    <span className="max-w-[16rem] text-right text-xs text-muted-foreground">{tr('dash.schedule.pending_hint')}</span>
                   )}
                 </div>
               </div>
+              {schedulingId === s.id && needsScheduling && (
+                <NextSessionPicker booking={s} onDone={() => setSchedulingId(null)} />
+              )}
               {/* Show individual sessions within this booking */}
               {s.booking_sessions && s.booking_sessions.length > 0 && (
                 <div className="mt-3 border-t border-border pt-3">
@@ -464,6 +475,86 @@ function ScheduleTab({ onBook }: { onBook: () => void }) {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+/**
+ * Picks the next session of a multi-session booking from the coach's free
+ * availability (same slots the booking wizard uses) and reserves it.
+ */
+function NextSessionPicker({ booking, onDone }: { booking: Booking; onDone: () => void }) {
+  const tr = useT()
+  const locale = useLocale()
+  const { slots, isLoading } = useTimeSlots(booking.session)
+  const [date, setDate] = useState('')
+  const [slotId, setSlotId] = useState('')
+  const [format, setFormat] = useState<'online' | 'offline'>(booking.format)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const free = slots.filter((sl) => !sl.is_blocked && !sl.is_booked)
+  const dates = Array.from(new Set(free.map((sl) => sl.date))).sort()
+  const times = free.filter((sl) => sl.date === date).sort((a, b) => a.start_time.localeCompare(b.start_time))
+
+  const submit = async () => {
+    if (!slotId) return
+    setBusy(true)
+    setError('')
+    try {
+      await scheduleNextSession(booking.id, { time_slot_id: slotId, format })
+      onDone()
+    } catch (e) {
+      setError(getErrorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const pill = (active: boolean) =>
+    cn(
+      'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+      active ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background hover:border-primary',
+    )
+
+  return (
+    <div className="mt-3 space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
+      {!isLoading && dates.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{tr('dash.schedule.no_slots')}</p>
+      ) : (
+        <>
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{tr('dash.schedule.pick_date')}</p>
+            <div className="flex flex-wrap gap-2">
+              {dates.map((d) => (
+                <button key={d} type="button" className={pill(date === d)} onClick={() => { setDate(d); setSlotId('') }}>
+                  {formatDate(d, locale, { year: false, weekday: true })}
+                </button>
+              ))}
+            </div>
+          </div>
+          {date && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{tr('dash.schedule.pick_time')}</p>
+              <div className="flex flex-wrap gap-2">
+                {times.map((sl) => (
+                  <button key={sl.id} type="button" className={pill(slotId === sl.id)} onClick={() => setSlotId(sl.id)}>
+                    {sl.start_time.slice(0, 5)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={pill(format === 'online')} onClick={() => setFormat('online')}>{tr('booking.online')}</button>
+            <button type="button" className={pill(format === 'offline')} onClick={() => setFormat('offline')}>{tr('format.in_person')}</button>
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <UIButton size="sm" onClick={submit} disabled={!slotId || busy}>
+            <Check className="size-3.5" /> {tr(busy ? 'dash.schedule.scheduling' : 'dash.schedule.confirm_next')}
+          </UIButton>
+        </>
+      )}
     </div>
   )
 }

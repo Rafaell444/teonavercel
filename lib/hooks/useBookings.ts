@@ -48,6 +48,8 @@ export interface Booking {
 
 export interface CreateBookingPayload {
   session_id: string
+  /** Chosen availability slot; the server marks it as taken. */
+  time_slot_id?: string
   date?: string
   time?: string
   format: 'online' | 'offline'

@@ -85,7 +85,7 @@ export async function createSession(body: Partial<Session>) {
     method: 'POST',
     body: JSON.stringify(body),
   })
-  await mutate((key: string) => typeof key === 'string' && key.startsWith('/api/sessions'), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.startsWith('/api/sessions'))
   return res
 }
 
@@ -94,13 +94,13 @@ export async function updateSession(id: string, body: Partial<Session>) {
     method: 'PATCH',
     body: JSON.stringify(body),
   })
-  await mutate((key: string) => typeof key === 'string' && key.startsWith('/api/sessions'), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.startsWith('/api/sessions'))
   return res
 }
 
 export async function deleteSession(id: string) {
   await apiFetch(`/api/sessions/${id}/`, { method: 'DELETE' })
-  await mutate((key: string) => typeof key === 'string' && key.startsWith('/api/sessions'), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.startsWith('/api/sessions'))
 }
 
 // ─── Time Slots ─────────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ export async function createTimeSlot(sessionId: string, body: Partial<SessionTim
     method: 'POST',
     body: JSON.stringify(body),
   })
-  await mutate((key: string) => typeof key === 'string' && key.includes(`/api/sessions/${sessionId}/slots`), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.includes(`/api/sessions/${sessionId}/slots`))
   return res
 }
 
@@ -126,7 +126,7 @@ export async function createTimeSlotssBulk(sessionId: string, slots: Partial<Ses
     method: 'POST',
     body: JSON.stringify({ slots }),
   })
-  await mutate((key: string) => typeof key === 'string' && key.includes(`/api/sessions/${sessionId}/slots`), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.includes(`/api/sessions/${sessionId}/slots`))
   return res
 }
 
@@ -135,13 +135,13 @@ export async function updateTimeSlot(sessionId: string, slotId: string, body: Pa
     method: 'PATCH',
     body: JSON.stringify(body),
   })
-  await mutate((key: string) => typeof key === 'string' && key.includes(`/api/sessions/${sessionId}/slots`), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.includes(`/api/sessions/${sessionId}/slots`))
   return res
 }
 
 export async function deleteTimeSlot(sessionId: string, slotId: string) {
   await apiFetch(`/api/sessions/${sessionId}/slots/${slotId}/`, { method: 'DELETE' })
-  await mutate((key: string) => typeof key === 'string' && key.includes(`/api/sessions/${sessionId}/slots`), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.includes(`/api/sessions/${sessionId}/slots`))
 }
 
 // ─── Group Schedules ────────────────────────────────────────────────────────
@@ -158,13 +158,13 @@ export async function createGroupSchedule(sessionId: string, body: Partial<Group
     method: 'POST',
     body: JSON.stringify(body),
   })
-  await mutate((key: string) => typeof key === 'string' && key.includes('/schedules/'), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.includes('/schedules/'))
   return res
 }
 
 export async function deleteGroupSchedule(sessionId: string, scheduleId: string) {
   await apiFetch(`/api/sessions/${sessionId}/schedules/${scheduleId}/`, { method: 'DELETE' })
-  await mutate((key: string) => typeof key === 'string' && key.includes('/schedules/'), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.includes('/schedules/'))
 }
 
 // ─── Group Seats ────────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ export async function claimGroupSeat(scheduleId: string, seatNumber: number) {
     `/api/sessions/schedules/${scheduleId}/seats/${seatNumber}/claim/`,
     { method: 'POST' }
   )
-  await mutate((key: string) => typeof key === 'string' && key.includes(`/seats/`), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.includes(`/seats/`))
   await mutate('/api/bookings/')
   return res
 }
@@ -202,7 +202,7 @@ export async function releaseGroupSeat(scheduleId: string, seatNumber: number) {
     `/api/sessions/schedules/${scheduleId}/seats/${seatNumber}/release/`,
     { method: 'POST' }
   )
-  await mutate((key: string) => typeof key === 'string' && key.includes(`/seats/`), undefined, { revalidate: true })
+  await mutate((key: string) => typeof key === 'string' && key.includes(`/seats/`))
   await mutate('/api/bookings/')
   return res
 }

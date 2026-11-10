@@ -16,23 +16,15 @@ node_modules/
 .DS_Store
 tsconfig.tsbuildinfo
 
-# Python / Django
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-ascend_backend/.venv/
-ascend_backend/venv/
-ascend_backend/db.sqlite3
-ascend_backend/media/
-ascend_backend/staticfiles/
-ascend_backend/.env
-*.egg-info/
-dist/
-build/
-
 # Misc
 *.log
 .idea/
 .vscode/
+
+# Uncompressed source images (the optimised copies live in public/)
+image-originals/
+
+# Local Firebase emulator data
+.firebase-data/
+*-debug.log
+firebase-debug.log

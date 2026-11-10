@@ -22,9 +22,10 @@ import { useMe } from '@/lib/hooks/useAuth'
 import { getErrorMessage } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useT, useLocale, useLocalized, fmt } from '@/lib/i18n'
+import { paymentsEnabled } from '@/lib/config'
 import { WEEKDAY_LABELS, formatDate, formatTime, monthYearLabel } from '@/lib/format'
 
-const STEP_KEYS = [
+const ALL_STEP_KEYS = [
   'booking.step.session',
   'booking.step.number',
   'booking.step.datetime',
@@ -33,6 +34,11 @@ const STEP_KEYS = [
   'booking.step.voucher',
   'booking.step.confirm',
 ] as const
+type StepKey = (typeof ALL_STEP_KEYS)[number]
+// Without online payments there is nothing to apply a voucher to, so that step is skipped
+const STEP_KEYS: readonly StepKey[] = paymentsEnabled
+  ? ALL_STEP_KEYS
+  : ALL_STEP_KEYS.filter((k) => k !== 'booking.step.voucher')
 // How long a block of sessions stays valid, in months, by number of sessions
 const VALIDITY_MONTHS: Record<number, string> = { 3: '1.5', 4: '2', 5: '3', 6: '3', 7: '5' }
 
@@ -134,6 +140,7 @@ export default function BookingWizard() {
   const [confirming, setConfirming] = useState(false)
 
   const steps = STEP_KEYS.map(k => t(k))
+  const stepKey = STEP_KEYS[step]
 
   const selectedSession = sessions.find(s => s.id === sessionId) || sessions[0]
   const activeSessionId = sessionId || sessions[0]?.id || ''
@@ -156,15 +163,11 @@ export default function BookingWizard() {
   const total = Math.max(basePrice - voucherDiscount, 0)
 
   const canContinue = (() => {
-    switch (step) {
-      case 0: return !!activeSessionId
-      case 1: return numSessions >= 3 && numSessions <= 7
-      case 2: return !!date && !!time
-      case 3: return true
-      case 4: return true
-      case 5: return true
-      case 6: return true
-      default: return false
+    switch (stepKey) {
+      case 'booking.step.session': return !!activeSessionId
+      case 'booking.step.number': return numSessions >= 3 && numSessions <= 7
+      case 'booking.step.datetime': return !!date && !!time
+      default: return true
     }
   })()
 
@@ -190,6 +193,8 @@ export default function BookingWizard() {
       const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       await createBooking({
         session_id: activeSessionId,
+        // The exact slot, so the server marks it as taken and nobody else can book it
+        time_slot_id: selectedSlotId || undefined,
         date: dateStr,
         time,
         format,
@@ -213,9 +218,9 @@ export default function BookingWizard() {
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-6 flex size-20 items-center justify-center rounded-full bg-primary/10">
           <Check className="size-9 text-primary" />
         </motion.div>
-        <h2 className="font-heading text-3xl font-bold">{t('booking.done.title')}</h2>
+        <h2 className="font-heading text-3xl font-bold">{t(paymentsEnabled ? 'booking.done.title' : 'booking.done.request_title')}</h2>
         <p className="mt-3 max-w-md text-muted-foreground">
-          {t('booking.done.body')}
+          {t(paymentsEnabled ? 'booking.done.body' : 'booking.done.request_body')}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           {t('booking.done.note')}
@@ -251,7 +256,7 @@ export default function BookingWizard() {
         <AnimatePresence mode="wait">
           <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
             {/* Step 0: Choose session */}
-            {step === 0 && (
+            {stepKey === 'booking.step.session' && (
               <div>
                 <h3 className="text-center text-lg font-semibold mb-4">{t('booking.choose_session')}</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -272,7 +277,7 @@ export default function BookingWizard() {
             )}
 
             {/* Step 1: Number of sessions */}
-            {step === 1 && (
+            {stepKey === 'booking.step.number' && (
               <div className="text-center space-y-6">
                 <h3 className="text-lg font-semibold">{t('booking.how_many')}</h3>
                 <div className="flex items-center justify-center gap-6">
@@ -295,7 +300,7 @@ export default function BookingWizard() {
             )}
 
             {/* Step 2: Date & Time */}
-            {step === 2 && (
+            {stepKey === 'booking.step.datetime' && (
               <div className="space-y-6">
                 <h3 className="text-center text-lg font-semibold mb-2">{t('booking.pick_date')}</h3>
                 <Calendar availableDates={availableDates} selected={date} onSelect={(d) => { setDate(d); setTime(''); setSelectedSlotId('') }} />
@@ -325,7 +330,7 @@ export default function BookingWizard() {
             )}
 
             {/* Step 3: Format */}
-            {step === 3 && (
+            {stepKey === 'booking.step.format' && (
               <div>
                 <h3 className="text-center text-lg font-semibold mb-4">{t('booking.choose_format')}</h3>
                 <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
@@ -352,7 +357,7 @@ export default function BookingWizard() {
             )}
 
             {/* Step 4: Session Language */}
-            {step === 4 && (
+            {stepKey === 'booking.language' && (
               <div>
                 <h3 className="text-center text-lg font-semibold mb-4">{t('booking.language')}</h3>
                 <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
@@ -377,7 +382,7 @@ export default function BookingWizard() {
             )}
 
             {/* Step 5: Voucher */}
-            {step === 5 && (
+            {stepKey === 'booking.step.voucher' && (
               <div className="max-w-md mx-auto space-y-4">
                 <h3 className="text-center text-lg font-semibold mb-2">{t('booking.voucher_code')}</h3>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -401,7 +406,7 @@ export default function BookingWizard() {
             )}
 
             {/* Step 6: Confirm */}
-            {step === 6 && selectedSession && (
+            {stepKey === 'booking.step.confirm' && selectedSession && (
               <UICard className="mx-auto max-w-md space-y-4 p-5 sm:p-6">
                 <h3 className="font-heading text-xl font-bold text-center">{t('booking.confirm_title')}</h3>
                 <div className="space-y-2 text-sm">
@@ -422,6 +427,7 @@ export default function BookingWizard() {
                   <div className="flex justify-between text-base"><span className="font-semibold">{t('booking.total')}</span><span className="font-heading text-xl font-bold text-primary">${total}</span></div>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">{t('booking.confirm.note')}</p>
+                {!paymentsEnabled && <p className="text-xs text-muted-foreground text-center">{t('booking.request.note')}</p>}
               </UICard>
             )}
           </motion.div>
@@ -438,7 +444,7 @@ export default function BookingWizard() {
             </UIButton>
           ) : (
             <UIButton onClick={confirm} disabled={confirming || !currentUser} className="w-full sm:w-auto">
-              {confirming ? t('booking.booking') : t('booking.confirm_pay')} <Check className="size-4" />
+              {confirming ? t(paymentsEnabled ? 'booking.booking' : 'booking.requesting') : t(paymentsEnabled ? 'booking.confirm_pay' : 'booking.request')} <Check className="size-4" />
             </UIButton>
           )}
         </div>

@@ -1,24 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { clearAuthCookies, getCurrentUser, revokeAllSessions } from '@/lib/server/auth'
+import { handle, json } from '@/lib/server/http'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
-export async function POST(req: NextRequest) {
-  const accessToken = req.cookies.get('access_token')?.value
-  const refreshToken = req.cookies.get('refresh_token')?.value
-
-  if (refreshToken && accessToken) {
-    await fetch(`${API_URL}/api/auth/logout/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ refresh: refreshToken }),
-    }).catch(() => {})
+export const POST = handle(async (req) => {
+  const user = await getCurrentUser(req)
+  if (user) {
+    // Invalidates the refresh token on every device; the current ID token
+    // expires by itself within the hour.
+    await revokeAllSessions(user.id).catch(() => {})
   }
-
-  const response = NextResponse.json({ ok: true })
-  response.cookies.delete('access_token')
-  response.cookies.delete('refresh_token')
-  return response
-}
+  await clearAuthCookies()
+  return json({ ok: true })
+})
