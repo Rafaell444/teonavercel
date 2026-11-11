@@ -4,3 +4,8 @@ allowBuilds:
   esbuild: true
   "@firebase/util": true
   protobufjs: true
+
+# firebase-admin pulls in jwks-rsa 4, which does a CommonJS require() of the
+# ESM-only jose 6 and crashes on Vercel; 3.x uses the CommonJS jose 4.
+overrides:
+  jwks-rsa: 3.2.2
