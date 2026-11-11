@@ -17,7 +17,15 @@ export const text = (max = 1000) => z.string().trim().max(max)
 export const required = (max = 200) => z.string().trim().min(1, 'This field is required.').max(max)
 export const email = z.string().trim().toLowerCase().email('Enter a valid email address.')
 export const uuidLike = z.string().min(1).max(128)
-export const fileField = z.instanceof(File)
+/**
+ * An uploaded file from multipart form data. Checked by shape rather than
+ * `instanceof File`, because the `File` global only exists in Node 20+ and a
+ * reference to it at import time would crash every API route on older runtimes.
+ */
+export const fileField = z.custom<File>(
+  (v) => typeof v === 'object' && v !== null && typeof (v as File).arrayBuffer === 'function' && typeof (v as File).size === 'number',
+  'Expected a file upload.',
+)
 export const stringList = z.preprocess(
   (v) => (typeof v === 'string' ? (v.trim().startsWith('[') ? JSON.parse(v) : v.split(',').map((s) => s.trim()).filter(Boolean)) : v),
   z.array(z.string()),

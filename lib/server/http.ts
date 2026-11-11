@@ -72,7 +72,8 @@ export async function readBody(req: Request): Promise<Record<string, unknown>> {
     const form = await req.formData()
     const out: Record<string, unknown> = {}
     for (const [key, value] of form.entries()) {
-      if (value instanceof File) {
+      if (typeof value !== 'string') {
+        // A file part (checked by shape: the File global is missing on Node < 20)
         if (value.size > 0) out[key] = value
       } else if (key in out) {
         const existing = out[key]
