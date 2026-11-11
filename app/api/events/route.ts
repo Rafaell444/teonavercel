@@ -1,9 +1,10 @@
 import { z } from 'zod'
 
 import { requireAdmin } from '@/lib/server/auth'
-import { COLLECTIONS, byString, getOr404, listApi, newId, now } from '@/lib/server/data'
+import { COLLECTIONS, getOr404, newId, now } from '@/lib/server/data'
 import { db } from '@/lib/server/firebase'
 import { created, handle, json, parseBody } from '@/lib/server/http'
+import { getEvents, invalidate, TAGS } from '@/lib/server/public-content'
 import { uploadFile } from '@/lib/server/storage'
 import { fileField, required, text } from '@/lib/server/validation'
 
@@ -18,11 +19,8 @@ export const eventSchema = z.object({
   image: fileField.optional(),
 })
 
-export const GET = handle(async () => {
-  const items = await listApi(col())
-  items.sort(byString('created_at', 'desc'))
-  return json(items)
-})
+/** Public: events, newest first (cached; see lib/server/public-content). */
+export const GET = handle(async () => json(await getEvents()))
 
 /** Admin: create an event (multipart form, optional image). */
 export const POST = handle(async (req) => {
@@ -34,5 +32,6 @@ export const POST = handle(async (req) => {
     image: image ? await uploadFile(image, 'events', { imagesOnly: true }) : null,
     created_at: now(),
   })
+  invalidate(TAGS.events)
   return created((await getOr404(COLLECTIONS.events, id)).data)
 })

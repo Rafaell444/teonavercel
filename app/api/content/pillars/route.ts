@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { byNumber } from '@/lib/server/data'
+import { getPillars, invalidate, TAGS } from '@/lib/server/public-content'
 import { simpleCollection } from '@/lib/server/services/crud'
 import { intField, required, stringList, text } from '@/lib/server/validation'
 
@@ -23,6 +24,8 @@ const routes = simpleCollection({
   create: pillarSchema,
   patch: pillarSchema.partial(),
   sort: byNumber('order'),
+  list: getPillars,
+  onChange: () => invalidate(TAGS.pillars),
 })
 
 export const GET = routes.GET

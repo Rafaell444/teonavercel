@@ -2,6 +2,7 @@ import { requireAdmin } from '@/lib/server/auth'
 import { COLLECTIONS, compact, getOr404 } from '@/lib/server/data'
 import { db } from '@/lib/server/firebase'
 import { assertId, handle, json, noContent, parseBody, type Params } from '@/lib/server/http'
+import { invalidate, TAGS } from '@/lib/server/public-content'
 import { schedulesCol, sessionSchema, slotsCol } from '@/lib/server/services/sessions'
 
 type Ctx = Params<{ id: string }>
@@ -17,6 +18,7 @@ export const PATCH = handle<Ctx>(async (req, { params }) => {
   const { ref } = await getOr404(COLLECTIONS.sessions, id)
   const patch = compact(await parseBody(req, sessionSchema.partial()))
   if (Object.keys(patch).length) await ref.update(patch)
+  invalidate(TAGS.sessions)
   return json((await getOr404(COLLECTIONS.sessions, id)).data)
 })
 
@@ -32,5 +34,6 @@ export const DELETE = handle<Ctx>(async (req, { params }) => {
     ...schedules.docs.map((d) => firestore.recursiveDelete(d.ref)),
   ])
   await ref.delete()
+  invalidate(TAGS.sessions)
   return noContent()
 })

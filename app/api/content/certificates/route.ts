@@ -1,19 +1,17 @@
 import { z } from 'zod'
 
 import { requireAdmin } from '@/lib/server/auth'
-import { COLLECTIONS, byNumber, getOr404, listApi, newId, now } from '@/lib/server/data'
+import { COLLECTIONS, getOr404, newId, now } from '@/lib/server/data'
 import { db } from '@/lib/server/firebase'
 import { created, handle, json, parseBody } from '@/lib/server/http'
+import { getCertificates, invalidate, TAGS } from '@/lib/server/public-content'
 import { uploadFile } from '@/lib/server/storage'
 import { fileField, intField, required } from '@/lib/server/validation'
 
 const col = () => db().collection(COLLECTIONS.certificates)
 
-export const GET = handle(async () => {
-  const items = await listApi(col())
-  items.sort(byNumber('order'))
-  return json(items)
-})
+/** Public: certificates in display order (cached; see lib/server/public-content). */
+export const GET = handle(async () => json(await getCertificates()))
 
 const createSchema = z.object({
   title: required(200),
@@ -28,5 +26,6 @@ export const POST = handle(async (req) => {
   const image = await uploadFile(body.image, 'certificates', { imagesOnly: true })
   const id = newId()
   await col().doc(id).set({ title: body.title, image, order: body.order, created_at: now() })
+  invalidate(TAGS.certificates)
   return created((await getOr404(COLLECTIONS.certificates, id)).data)
 })

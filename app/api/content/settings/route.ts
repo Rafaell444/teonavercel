@@ -1,42 +1,14 @@
 import { z } from 'zod'
 
 import { requireAdmin } from '@/lib/server/auth'
-import { COLLECTIONS, compact } from '@/lib/server/data'
-import { db } from '@/lib/server/firebase'
+import { compact } from '@/lib/server/data'
 import { handle, json, parseBody } from '@/lib/server/http'
+import { getSettings, invalidate, readSettings, settingsRef, TAGS } from '@/lib/server/public-content'
 import { deleteFile, uploadFile } from '@/lib/server/storage'
 import { fileField, text } from '@/lib/server/validation'
 
-/** Single document: settings/site. Field names are camelCase, as the frontend reads them. */
-const DEFAULTS = {
-  brandName: 'TEONA',
-  heroBadge: '',
-  heroBadgeKa: '',
-  heroTitle: '',
-  heroTitleKa: '',
-  heroHighlight: '',
-  heroHighlightKa: '',
-  heroSubtitle: '',
-  heroSubtitleKa: '',
-  footerTagline: '',
-  footerTaglineKa: '',
-  contactEmail: '',
-  contactPhone: '',
-  contactLocation: '',
-  statHours: '',
-  statLives: '',
-  statReturn: '',
-  heroImage: null as string | null,
-}
-
-const ref = () => db().collection(COLLECTIONS.settings).doc('site')
-
-export async function readSettings() {
-  const snap = await ref().get()
-  return { ...DEFAULTS, ...(snap.data() ?? {}) }
-}
-
-export const GET = handle(async () => json(await readSettings()))
+/** Public: the site settings (cached; see lib/server/public-content). */
+export const GET = handle(async () => json(await getSettings()))
 
 const patchSchema = z.object({
   brandName: text(60).optional(),
@@ -68,6 +40,9 @@ export const PATCH = handle(async (req) => {
     patch.heroImage = await uploadFile(heroImage, 'hero', { imagesOnly: true })
     await deleteFile(previous)
   }
-  if (Object.keys(patch).length) await ref().set(patch, { merge: true })
+  if (Object.keys(patch).length) {
+    await settingsRef().set(patch, { merge: true })
+    invalidate(TAGS.settings)
+  }
   return json(await readSettings())
 })

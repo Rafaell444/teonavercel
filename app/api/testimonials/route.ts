@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { byNumber } from '@/lib/server/data'
+import { getTestimonials, invalidate, TAGS } from '@/lib/server/public-content'
 import { simpleCollection } from '@/lib/server/services/crud'
 import { intField, required, text } from '@/lib/server/validation'
 
@@ -16,6 +17,8 @@ const routes = simpleCollection({
   create: testimonialSchema,
   patch: testimonialSchema.partial(),
   sort: byNumber('order'),
+  list: getTestimonials,
+  onChange: () => invalidate(TAGS.testimonials),
 })
 
 export const GET = routes.GET
