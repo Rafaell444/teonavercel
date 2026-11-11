@@ -198,7 +198,7 @@ async function importSimple() {
   if (settings) {
     const f = settings.fields
     await db().collection(COLLECTIONS.settings).doc('site').set({
-      brandName: str(f.brand_name, 'Ascend'), heroBadge: str(f.hero_badge), heroBadgeKa: str(f.hero_badge_ka), heroTitle: str(f.hero_title), heroTitleKa: str(f.hero_title_ka),
+      brandName: str(f.brand_name, 'TEONA'), heroBadge: str(f.hero_badge), heroBadgeKa: str(f.hero_badge_ka), heroTitle: str(f.hero_title), heroTitleKa: str(f.hero_title_ka),
       heroHighlight: str(f.hero_highlight), heroHighlightKa: str(f.hero_highlight_ka), heroSubtitle: str(f.hero_subtitle), heroSubtitleKa: str(f.hero_subtitle_ka),
       footerTagline: str(f.footer_tagline), footerTaglineKa: str(f.footer_tagline_ka), contactEmail: str(f.contact_email), contactPhone: str(f.contact_phone),
       contactLocation: str(f.contact_location), statHours: str(f.stat_hours), statLives: str(f.stat_lives), statReturn: str(f.stat_return), heroImage: null,

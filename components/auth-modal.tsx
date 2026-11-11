@@ -85,7 +85,7 @@ export function AuthModal({
         </button>
 
         <span className="font-heading text-2xl font-bold">
-          Ascend<span className="text-primary">.</span>
+          TEONA<span className="text-primary">.</span>
         </span>
         <h2 id={`${fid}-title`} className="mt-5 font-heading text-3xl font-bold tracking-tight text-balance">
           {isRegister ? t('auth.title.register') : t('auth.title.login')}

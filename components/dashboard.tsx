@@ -80,7 +80,7 @@ function SidebarContent({
   return (
     <>
       <span className="font-heading text-2xl font-bold">
-        Ascend<span className="text-primary">.</span>
+        TEONA<span className="text-primary">.</span>
       </span>
       <nav className="mt-10 flex flex-1 flex-col gap-1">
         {navItems.map((item) => {

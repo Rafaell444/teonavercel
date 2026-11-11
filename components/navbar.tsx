@@ -85,7 +85,7 @@ export function Navbar({
           onClick={() => go('home')}
           className="font-heading text-xl font-bold tracking-tight transition-all duration-200 hover:opacity-80 hover:scale-[1.02]"
         >
-          Ascend<span className="text-primary">.</span>
+          TEONA<span className="text-primary">.</span>
         </button>
 
         <nav className="hidden items-center gap-1 lg:flex">

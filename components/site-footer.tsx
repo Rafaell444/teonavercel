@@ -96,7 +96,7 @@ export function SiteFooter({ onNavigate }: SiteFooterProps) {
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-background/10 pt-8 text-sm text-background/50 lg:flex-row">
           <p className="text-center lg:text-left">
-            © {new Date().getFullYear()} {settings?.brandName ?? 'Ascend'}. {t('footer.rights')}
+            © {new Date().getFullYear()} {settings?.brandName ?? 'TEONA'}. {t('footer.rights')}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <button onClick={() => handleNav('privacy')} className="hover:text-background transition-colors">

@@ -1,4 +1,4 @@
-# Ascend — coaching website
+# TEONA — coaching website
 
 Next.js site with its API built in, backed by Firebase (Firestore and Authentication,
 both on the free plan). Everything deploys to Vercel as one project; there is no separate
@@ -57,7 +57,7 @@ npx firebase-tools emulators:start --import=.firebase-data --export-on-exit
 GCLOUD_PROJECT=demo-ascend
 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
-SEED_ADMIN_EMAIL=admin@ascend.com
+SEED_ADMIN_EMAIL=admin@teona.ge
 SEED_ADMIN_PASSWORD=admin12345
 ```
 

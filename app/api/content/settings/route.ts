@@ -9,7 +9,7 @@ import { fileField, text } from '@/lib/server/validation'
 
 /** Single document: settings/site. Field names are camelCase, as the frontend reads them. */
 const DEFAULTS = {
-  brandName: 'Ascend',
+  brandName: 'TEONA',
   heroBadge: '',
   heroBadgeKa: '',
   heroTitle: '',

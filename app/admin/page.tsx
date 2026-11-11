@@ -60,7 +60,7 @@ function AdminShell() {
               <Shield className="size-3.5 text-primary-foreground" />
             </div>
             <span className="font-heading text-sm font-bold tracking-tight">
-              Ascend<span className="text-primary">.</span> Admin
+              TEONA<span className="text-primary">.</span> Admin
             </span>
           </div>
           <div className="flex items-center gap-3">

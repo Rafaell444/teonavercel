@@ -75,7 +75,7 @@ export function TermsPage({ onNavigate }: { onNavigate?: (view: string) => void 
   return (
     <LegalPage
       title={t('legal.terms.title')}
-      sections={content[locale](settings?.brandName || 'Ascend')}
+      sections={content[locale](settings?.brandName || 'TEONA')}
       onNavigate={onNavigate}
     />
   )

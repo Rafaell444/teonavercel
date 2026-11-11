@@ -9,7 +9,7 @@ import { db } from './firebase'
  */
 
 const ADMIN_EMAIL = () => process.env.ADMIN_EMAIL || ''
-const FROM_EMAIL = () => process.env.EMAIL_FROM || 'Ascend <onboarding@resend.dev>'
+const FROM_EMAIL = () => process.env.EMAIL_FROM || 'TEONA <onboarding@resend.dev>'
 const ADMIN_PHONE = () => process.env.ADMIN_PHONE || ''
 
 type Kind = 'sms' | 'email' | 'calendar_invite'
@@ -88,7 +88,7 @@ export async function notifyBookingCreated(b: BookingForNotify) {
   ]
   if (b.expires_at) lines.push(`Valid until: ${new Date(b.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`)
   if (b.meet_link) lines.push('', `Google Meet link: ${b.meet_link}`)
-  lines.push('', 'Thank you for choosing Ascend!')
+  lines.push('', 'Thank you for choosing TEONA!')
   await sendEmail(b.user_email, `Booking Confirmed — ${b.session_title}`, lines.join('\n'), b.id)
 }
 
@@ -104,5 +104,5 @@ export async function notifySessionScheduled(b: BookingForNotify, s: { session_n
 
 export async function notifyAdminNewMessage(m: { name: string; email: string; subject: string; message: string }) {
   if (!ADMIN_EMAIL()) return
-  await sendEmail(ADMIN_EMAIL(), `[Ascend] New contact: ${m.subject}`, `From: ${m.name} <${m.email}>\n\n${m.message}`)
+  await sendEmail(ADMIN_EMAIL(), `[TEONA] New contact: ${m.subject}`, `From: ${m.name} <${m.email}>\n\n${m.message}`)
 }

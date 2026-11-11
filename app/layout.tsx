@@ -35,7 +35,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Ascend — Premium Coaching & Therapy',
+  title: 'TEONA — Premium Coaching & Therapy',
   description:
     'Transformative one-on-one coaching, group seminars, and therapy. Book a session and unlock your next level.',
 }

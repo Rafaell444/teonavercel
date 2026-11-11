@@ -93,7 +93,7 @@ async function main() {
 
   console.log('Site settings')
   await ensureDocFilling(COLLECTIONS.settings, 'site', {
-    brandName: 'Ascend',
+    brandName: 'TEONA',
     heroBadge: 'Trusted by 12,000+ clients worldwide',
     heroBadgeKa: 'გვენდობა 12,000+ კლიენტი მსოფლიოდან',
     heroTitle: 'Become the person your',

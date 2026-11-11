@@ -1961,7 +1961,7 @@ function ContentTab() {
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Brand Name</label>
-              <UIInput value={currentDraft.brandName ?? ''} onChange={(e) => setDraft({ ...currentDraft, brandName: e.target.value })} placeholder="Ascend" />
+              <UIInput value={currentDraft.brandName ?? ''} onChange={(e) => setDraft({ ...currentDraft, brandName: e.target.value })} placeholder="TEONA" />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Hero Badge Text</label>
@@ -2050,7 +2050,7 @@ function ContentTab() {
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-1.5"><Mail className="size-3.5" /> Email Address</label>
-              <UIInput value={currentDraft.contactEmail ?? ''} onChange={(e) => setDraft({ ...currentDraft, contactEmail: e.target.value })} placeholder="hello@ascend.co" />
+              <UIInput value={currentDraft.contactEmail ?? ''} onChange={(e) => setDraft({ ...currentDraft, contactEmail: e.target.value })} placeholder="hello@teona.ge" />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-1.5"><Phone className="size-3.5" /> Phone Number</label>

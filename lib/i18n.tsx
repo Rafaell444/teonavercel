@@ -50,9 +50,9 @@ const translations: Record<string, Record<Locale, string>> = {
   'about.cta': { ka: 'დაიწყე შენი ისტორია', en: 'Start your story' },
 
   // About page
-  'aboutPage.eyebrow': { ka: 'ჩვენს შესახებ', en: 'About Ascend' },
+  'aboutPage.eyebrow': { ka: 'ჩვენს შესახებ', en: 'About TEONA' },
   'aboutPage.title': { ka: 'ღრმა სამუშაო, რომელიც სიცოცხლის ბოლომდე გრძელდება.', en: 'Grounded work that lasts a lifetime.' },
-  'aboutPage.subtitle': { ka: 'Ascend არის პრემიუმ კოუჩინგისა და თერაპიის პრაქტიკა ადამიანებისთვის, ვინც ნამდვილი მუშაობისთვის მზად არის — ჰაიპის გარეშე, მალსახმობების გარეშე, მხოლოდ ღრმა ტრანსფორმაცია.', en: 'Ascend is a premium coaching and therapy practice for people ready to do the real work — no hype, no shortcuts, just deep transformation.' },
+  'aboutPage.subtitle': { ka: 'TEONA არის პრემიუმ კოუჩინგისა და თერაპიის პრაქტიკა ადამიანებისთვის, ვინც ნამდვილი მუშაობისთვის მზად არის — ჰაიპის გარეშე, მალსახმობების გარეშე, მხოლოდ ღრმა ტრანსფორმაცია.', en: 'TEONA is a premium coaching and therapy practice for people ready to do the real work — no hype, no shortcuts, just deep transformation.' },
   'aboutPage.values.depth': { ka: 'სიღრმე ჰაიპის ნაცვლად', en: 'Depth over hype' },
   'aboutPage.values.depthBody': { ka: 'ფესვამდე ვწვდებით, არა ზედაპირამდე. ნამდვილი ცვლილება, არა მოტივაციური შაქარი.', en: 'We go to the root, not the surface. Real change, not motivational sugar.' },
   'aboutPage.values.honesty': { ka: 'რადიკალური გულწრფელობა', en: 'Radical honesty' },
