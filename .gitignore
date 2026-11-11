@@ -20,6 +20,7 @@ tsconfig.tsbuildinfo
 *.log
 .idea/
 .vscode/
+.claude/
 
 # Uncompressed source images (the optimised copies live in public/)
 image-originals/

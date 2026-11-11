@@ -33,6 +33,8 @@ export const COLLECTIONS = {
   consultationBookings: 'consultationBookings',
   notifications: 'notificationLogs',
   settings: 'settings',
+  /** Uploaded files, stored as chunks (see lib/server/storage.ts) */
+  files: 'files',
 } as const
 
 export const newId = () => randomUUID()

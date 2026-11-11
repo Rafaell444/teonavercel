@@ -1,8 +1,8 @@
 # Ascend — coaching website
 
-Next.js site with its API built in, backed by Firebase (Firestore, Authentication,
-Storage). Everything deploys to Vercel as one project; there is no separate
-backend server to run.
+Next.js site with its API built in, backed by Firebase (Firestore and Authentication,
+both on the free plan). Everything deploys to Vercel as one project; there is no separate
+backend server to run and no paid Firebase feature is needed.
 
 ## How it is put together
 
@@ -13,17 +13,19 @@ backend server to run.
 | Server helpers | `lib/server/` | Firebase Admin SDK, auth, validation, uploads, notifications |
 | Data | Firestore | collections listed in `lib/server/data.ts` |
 | Sign-in | Firebase Authentication | email + password, driven from the API; tokens in httpOnly cookies |
-| Files | Firebase Storage | hero image, event photos, certificates, vault files |
+| Files | Firestore (`files` collection) | hero image, event photos, certificates, vault files; images are compressed to WebP, served by `/api/files/{id}` |
 
 ## 1. Create the Firebase project (once)
 
 1. [console.firebase.google.com](https://console.firebase.google.com) → **Add project**.
 2. **Build → Authentication → Get started → Sign-in method → Email/Password → Enable.**
 3. **Build → Firestore Database → Create database** (production mode, pick a region near Georgia, e.g. `europe-west3`).
-4. **Build → Storage → Get started.**
-5. **Project settings → Service accounts → Generate new private key.** Keep the JSON file; it is the `FIREBASE_SERVICE_ACCOUNT` value.
-6. **Project settings → General → Web API Key** is the `FIREBASE_WEB_API_KEY` value.
-7. Paste the contents of `firestore.rules` and `storage.rules` into the Rules tabs of Firestore and Storage and publish them (they block all direct browser access; the API uses the Admin SDK).
+4. **Project settings → Service accounts → Generate new private key.** Keep the JSON file; it is the `FIREBASE_SERVICE_ACCOUNT` value.
+5. **Project settings → General → Web API Key** is the `FIREBASE_WEB_API_KEY` value.
+6. Paste the contents of `firestore.rules` into the Firestore **Rules** tab and publish (it blocks all direct browser access; the API uses the Admin SDK).
+
+Firebase Storage is not used (it needs a billing account): uploaded files are stored in Firestore.
+Keep uploads reasonable: images are compressed automatically, and the free plan holds 1 GiB.
 
 ## 2. Run locally
 
@@ -55,7 +57,6 @@ npx firebase-tools emulators:start --import=.firebase-data --export-on-exit
 GCLOUD_PROJECT=demo-ascend
 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
-FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199
 SEED_ADMIN_EMAIL=admin@ascend.com
 SEED_ADMIN_PASSWORD=admin12345
 ```
@@ -93,7 +94,6 @@ a Django export; re-upload them from the admin panel.
 |---|---|---|
 | `FIREBASE_SERVICE_ACCOUNT` | yes | Service-account JSON (raw or base64) |
 | `FIREBASE_WEB_API_KEY` | yes | Email/password sign-in |
-| `FIREBASE_STORAGE_BUCKET` | no | Defaults to the project's bucket |
 | `RESEND_API_KEY`, `EMAIL_FROM` | no | Send booking emails through Resend; otherwise they are only logged |
 | `ADMIN_EMAIL` | no | Receives contact-form messages |
 | `ADMIN_PHONE` | no | Shown in SMS log entries (no SMS provider is connected) |

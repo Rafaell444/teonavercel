@@ -1,15 +1,15 @@
 import { type App, cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { FieldValue, Timestamp, getFirestore, type Firestore } from 'firebase-admin/firestore'
-import { getStorage } from 'firebase-admin/storage'
 
 /**
- * Firebase Admin SDK, shared by every API route.
+ * Firebase Admin SDK, shared by every API route. Only Authentication and
+ * Firestore are used (both on the free plan); uploaded files are stored in
+ * Firestore too, so Firebase Storage is never needed.
  *
  * Environment variables (see .env.example):
  *   FIREBASE_SERVICE_ACCOUNT  — the service-account JSON (raw or base64-encoded)
  *   FIREBASE_WEB_API_KEY      — the project's Web API key (used for email/password sign-in)
- *   FIREBASE_STORAGE_BUCKET   — optional; defaults to the project's default bucket
  *
  * Local development can use the Firebase Emulator Suite instead of a real
  * project (`firebase emulators:start`): when FIRESTORE_EMULATOR_HOST is set no
@@ -47,7 +47,7 @@ export function firebaseApp(): App {
   if (existing) return (globalForFirebase.__ascendFirebase = existing)
   if (usingEmulators()) {
     const projectId = process.env.GCLOUD_PROJECT || 'demo-ascend'
-    const app = initializeApp({ projectId, storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com` })
+    const app = initializeApp({ projectId })
     globalForFirebase.__ascendFirebase = app
     return app
   }
@@ -59,7 +59,6 @@ export function firebaseApp(): App {
       privateKey: account.private_key,
     }),
     projectId: account.project_id,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${account.project_id}.firebasestorage.app`,
   })
   globalForFirebase.__ascendFirebase = app
   return app
@@ -75,7 +74,6 @@ export function db(): Firestore {
 }
 
 export const auth = () => getAuth(firebaseApp())
-export const bucket = () => getStorage(firebaseApp()).bucket()
 
 export { FieldValue, Timestamp }
 
