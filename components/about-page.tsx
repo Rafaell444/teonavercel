@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import Image from 'next/image'
-import { ArrowRight, X } from 'lucide-react'
+import { ArrowRight, Award, X } from 'lucide-react'
 import { UIButton, Eyebrow } from '@/components/ui-kit'
 import { SiteFooter } from '@/components/site-footer'
 import { useCertificates, useSiteSettings } from '@/lib/hooks/useContent'
@@ -15,8 +15,8 @@ export function AboutPage({ onBook, onNavigate }: { onBook: () => void; onNaviga
   // Same figures as the home page, editable in the admin panel
   const stats = [
     { stat: settings?.statHours, label: t('about.stat.hours') },
-    { stat: settings?.statLives, label: t('about.stat.lives') },
-    { stat: settings?.statReturn, label: t('about.stat.return') },
+    { stat: settings?.statLives, label: t('about.stat.years') },
+    { stat: settings?.statReturn, label: t('about.stat.management') },
   ]
   return (
     <div className="bg-background pt-24 sm:pt-32">
@@ -47,6 +47,8 @@ export function AboutPage({ onBook, onNavigate }: { onBook: () => void; onNaviga
             </h2>
             <div className="mt-6 space-y-5 text-muted-foreground leading-relaxed">
               <p>{t('about.p1')}</p>
+              <p>{t('aboutPage.experience')}</p>
+              <p>{t('aboutPage.interests')}</p>
               <p>{t('about.p2')}</p>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-8 gap-y-5">
@@ -64,32 +66,78 @@ export function AboutPage({ onBook, onNavigate }: { onBook: () => void; onNaviga
           </div>
         </div>
 
-        <div className="mt-16 grid gap-4 sm:mt-24 sm:gap-6 md:grid-cols-3">
-          {[
-            {
-              title: t('aboutPage.values.depth'),
-              body: t('aboutPage.values.depthBody'),
-            },
-            {
-              title: t('aboutPage.values.honesty'),
-              body: t('aboutPage.values.honestyBody'),
-            },
-            {
-              title: t('aboutPage.values.results'),
-              body: t('aboutPage.values.resultsBody'),
-            },
-          ].map((v) => (
-            <div key={v.title} className="rounded-2xl border border-border bg-card p-6 sm:p-7">
-              <h3 className="font-heading text-xl font-bold tracking-tight">{v.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{v.body}</p>
-            </div>
-          ))}
+        <div className="mt-16 sm:mt-24">
+          <Eyebrow>{t('aboutPage.focus.eyebrow')}</Eyebrow>
+          <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            {t('aboutPage.focus.title')}
+          </h2>
+          <div className="mt-8 grid gap-4 sm:gap-6 md:grid-cols-3">
+            {[
+              { title: t('aboutPage.focus.leadership'), body: t('aboutPage.focus.leadershipBody') },
+              { title: t('aboutPage.focus.teams'), body: t('aboutPage.focus.teamsBody') },
+              { title: t('aboutPage.focus.public'), body: t('aboutPage.focus.publicBody') },
+            ].map((v) => (
+              <div key={v.title} className="rounded-2xl border border-border bg-card p-6 sm:p-7">
+                <h3 className="font-heading text-xl font-bold tracking-tight text-balance">{v.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{v.body}</p>
+              </div>
+            ))}
+          </div>
         </div>
+
+        <CredentialsSection />
 
         <CertificationsSection />
       </div>
       <div className="pb-24" />
       <SiteFooter onNavigate={onNavigate} />
+    </div>
+  )
+}
+
+/** Accreditation and coaching education, as listed on Teona's ICF Georgia profile. */
+function CredentialsSection() {
+  const t = useT()
+  const training = [
+    { title: t('aboutPage.cred.acc'), by: t('aboutPage.cred.accBy') },
+    { title: t('aboutPage.cred.actp'), by: 'Erickson Coaching International' },
+    { title: t('aboutPage.cred.team'), by: 'Erickson Coaching International' },
+    { title: t('aboutPage.cred.nlp'), by: t('aboutPage.cred.nlpBy') },
+    { title: t('aboutPage.cred.gc'), by: t('aboutPage.cred.gcBy') },
+  ]
+  const facts = [
+    { label: t('aboutPage.cred.specialisms'), value: t('aboutPage.cred.specialismsValue') },
+    { label: t('aboutPage.cred.hours'), value: t('aboutPage.cred.hoursValue') },
+    { label: t('aboutPage.cred.languages'), value: t('aboutPage.cred.languagesValue') },
+    { label: t('aboutPage.cred.workplace'), value: t('aboutPage.cred.workplaceValue') },
+  ]
+  return (
+    <div className="mt-16 sm:mt-24">
+      <Eyebrow>{t('aboutPage.cred.eyebrow')}</Eyebrow>
+      <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+        {t('aboutPage.cred.title')}
+      </h2>
+      <div className="mt-8 grid gap-4 sm:gap-6 lg:grid-cols-[3fr_2fr]">
+        <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
+          {training.map((item) => (
+            <li key={item.title} className="flex gap-4 p-5 sm:p-6">
+              <Award className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+              <div className="min-w-0">
+                <p className="font-semibold leading-snug">{item.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{item.by}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <dl className="grid content-start gap-5 rounded-2xl border border-border bg-card p-5 sm:p-6">
+          {facts.map((f) => (
+            <div key={f.label}>
+              <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{f.label}</dt>
+              <dd className="mt-1 font-medium">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </div>
   )
 }

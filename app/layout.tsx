@@ -37,7 +37,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'TEONA — Premium Coaching & Therapy',
   description:
-    'Transformative one-on-one coaching, group seminars, and therapy. Book a session and unlock your next level.',
+    'Leadership, management and team coaching with Teona Bebia, an ICF-accredited (ACC) coach in Tbilisi. Sessions in Georgian and English.',
 }
 
 export default function RootLayout({

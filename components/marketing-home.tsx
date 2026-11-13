@@ -379,8 +379,8 @@ function About({ onBook }: { onBook: () => void }) {
   const t = useT()
   const stats = [
     { stat: settings?.statHours, label: t('about.stat.hours') },
-    { stat: settings?.statLives, label: t('about.stat.lives') },
-    { stat: settings?.statReturn, label: t('about.stat.return') },
+    { stat: settings?.statLives, label: t('about.stat.years') },
+    { stat: settings?.statReturn, label: t('about.stat.management') },
   ]
   return (
     <section id="about" className="bg-background py-16 sm:py-24">

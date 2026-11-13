@@ -2070,9 +2070,9 @@ function ContentTab() {
           <p className="mb-4 text-sm text-muted-foreground">These numbers appear in the About section of the marketing page.</p>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              { key: 'statHours' as const, label: 'Coaching Hours', sub: 'Shown as: "Coaching hours"', ph: '20k+' },
-              { key: 'statLives' as const, label: 'Lives Changed', sub: 'Shown as: "Lives changed"', ph: '12k+' },
-              { key: 'statReturn' as const, label: 'Return Rate', sub: 'Shown as: "Would return"', ph: '98%' },
+              { key: 'statHours' as const, label: 'Coaching Hours', sub: 'Shown as: "Coaching hours"', ph: '200+' },
+              { key: 'statLives' as const, label: 'Public Sector Years', sub: 'Shown as: "Years in the public sector"', ph: '20+' },
+              { key: 'statReturn' as const, label: 'Management Years', sub: 'Shown as: "Years in management"', ph: '14+' },
             ].map((s) => (
               <div key={s.key}>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{s.label}</label>
@@ -2084,7 +2084,7 @@ function ContentTab() {
           <div className="mt-5 rounded-2xl border border-dashed border-border bg-secondary/50 p-5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground mb-3">Preview</p>
             <div className="flex flex-wrap gap-8">
-              {[{ stat: currentDraft.statHours, label: 'Coaching hours' }, { stat: currentDraft.statLives, label: 'Lives changed' }, { stat: currentDraft.statReturn, label: 'Would return' }].map((s) => (
+              {[{ stat: currentDraft.statHours, label: 'Coaching hours' }, { stat: currentDraft.statLives, label: 'Years in the public sector' }, { stat: currentDraft.statReturn, label: 'Years in management' }].map((s) => (
                 <div key={s.label}>
                   <p className="font-heading text-2xl font-bold text-primary">{s.stat}</p>
                   <p className="text-xs text-muted-foreground">{s.label}</p>
